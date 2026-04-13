@@ -1,0 +1,175 @@
+{
+  "facebookAccount": {
+    "email": "sximsxint@gmail.com",
+    "password": "HHHSAIM",
+    "2FASecret": "",
+    "i_user": "",
+    "proxy": null,
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.60 Mobile Safari/537.36",
+    "intervalGetNewCookie": 1440,
+    "notes": "Automatically retrieves new cookies every x minutes. Recommended: 1440 (1 day)."
+  },
+  "antiInbox": false,
+  "language": "ar",
+  "notesLanguage": "change language using ISO 639-1 code",
+  "nickNameBot": "𓆩⚝𓆪𝕭𝖑𝖆𝖈𝖐𓆩⚝𓆪",
+  "prefix": ".",
+  "adminOnly": {
+    "enable": false,
+    "ignoreCommand": [
+      "الاوامر",
+      "menu",
+      "commands",
+      "help",
+      "cmds",
+      "بلاك",
+      "black",
+      "blk",
+      "ذكاء",
+      "مانغا",
+      "manga",
+      "مانجا",
+      "مانهوا",
+      "manhua",
+      "manhwa"
+    ]
+  },
+  "adminBot": [
+    "61583835186508",
+    "61586866122128",
+    "61579533235987",
+    "61587142678804",
+    "61580909023665"
+  ],
+  "reactUnsend": {
+    "enable": true,
+    "onlyAdmin": true,
+    "emojis": [
+      "😡",
+      "🤬"
+    ],
+    "notes": "If enable = true, bot will unsend any message reacted with these emojis. If onlyAdmin = true, only adminBot IDs can trigger it."
+  },
+  "blackListMode": {
+    "enable": false,
+    "blackListIds": [
+      "100083039411474",
+      "100063840894133"
+    ],
+    "notes": "If enabled, only IDs in blackListIds can use the bot."
+  },
+  "blackListModeThread": {
+    "enable": false,
+    "blackListThreadIds": [],
+    "notes": "If enabled, only threads in blackListThreadIds can use the bot."
+  },
+  "database": {
+    "type": "sqlite",
+    "uriMongodb": "",
+    "autoSyncWhenStart": false,
+    "autoRefreshThreadInfoFirstTime": true,
+    "notes": "Recommended using 'mongodb' or 'sqlite'."
+  },
+  "timeZone": "Asia/Dhaka",
+  "apiKeys": {
+    "groq": "AIzaSyDTJ1RExAMb7AbkykIfi1k3yLDbLkAUAzo"
+  },
+  "credentials": {
+    "gmailAccount": {
+      "email": "botofnexxo@gmail.com",
+      "clientId": "848792512039-g3mlfd39p9ttu82ga4kahk6kadjr0hcp.apps.googleusercontent.com",
+      "clientSecret": "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",
+      "refreshToken": " ",
+      "apiKey": "AIzaSyDTJ1RExAMb7AbkykIfi1k3yLDbLkAUAzo"
+    },
+    "gRecaptcha": {
+      "siteKey": "6LfU0TUrAAAAAJVy_tm-q9xlEIEeyBK4N8VwuGdZ",
+      "secretKey": "6LfU0TUrAAAAAOR_CE7oZV-8Eo83LsJmb12-lWFb"
+    }
+  },
+  "dashBoard": {
+    "enable": false,
+    "expireVerifyCode": 300000,
+    "port": 3001
+  },
+  "serverUptime": {
+    "enable": false,
+    "port": 3001,
+    "socket": {
+      "enable": true,
+      "channelName": "uptime",
+      "verifyToken": ""
+    }
+  },
+  "autoRestart": {
+    "time": null,
+    "notes": "Example: 60000 (1min), 3600000 (1hr), 0 0 * * * (daily)."
+  },
+  "autoUptime": {
+    "enable": false,
+    "timeInterval": 180,
+    "url": "",
+    "notes": "Time in seconds. Recommended for uptime monitors."
+  },
+  "autoLoadScripts": {
+    "enable": false,
+    "ignoreCmds": "",
+    "ignoreEvents": "",
+    "notes": "Automatically reloads scripts if edited."
+  },
+  "autoRefreshFbstate": true,
+  "autoReloginWhenChangeAccount": false,
+  "autoRestartWhenListenMqttError": true,
+  "restartListenMqtt": {
+    "enable": true,
+    "timeRestart": 300000,
+    "delayAfterStopListening": 1000,
+    "logNoti": false,
+    "notes": "Restart listener every 5 minutes."
+  },
+  "notiWhenListenMqttError": {
+    "notes": "Notification settings when MQTT stops listening.",
+    "gmail": {
+      "enable": false,
+      "emailGetNoti": ""
+    },
+    "telegram": {
+      "enable": false,
+      "botToken": "",
+      "chatId": ""
+    },
+    "discordHook": {
+      "enable": false,
+      "webhookUrl": ""
+    }
+  },
+  "hideNotiMessage": {
+    "commandNotFound": false,
+    "adminOnly": false,
+    "threadBanned": false,
+    "userBanned": false,
+    "needRoleToUseCmd": false,
+    "needRoleToUseCmdOnReply": false,
+    "needRoleToUseCmdOnReaction": false
+  },
+  "logEvents": {
+    "disableAll": false,
+    "message": false,
+    "message_reaction": false,
+    "message_unsend": true,
+    "message_reply": false,
+    "event": false,
+    "read_receipt": false,
+    "typ": false,
+    "presence": false
+  },
+  "optionsFca": {
+    "forceLogin": true,
+    "listenEvents": true,
+    "updatePresence": false,
+    "listenTyping": true,
+    "selfListen": false,
+    "selfListenEvent": true,
+    "autoReconnect": true
+  }
+}

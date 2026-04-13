@@ -1,0 +1,45 @@
+[5/7] نفّذ الأمر التالي: npm install --legacy-peer-deps --force && npm rebuild sqlite3 --build-from-source
+... تم اختصارها إلى 20 سجلاً، انقر لعرض المزيد ...
+تحذير npm: تم إيقاف استخدام node-uuid@1.4.8: استخدم وحدة uuid بدلاً من ذلك
+
+تحذير من npm: تم إيقاف استخدام lodash.pick@4.4.0: هذه الحزمة مهملة. استخدم صيغة التفكيك بدلاً منها.
+
+تحذير npm: تم إيقاف دعم مكتبة har-validator@5.1.5: هذه المكتبة لم تعد مدعومة
+
+npm warn deprecated npmlog@1.2.1: لم يعد هذا البرنامج مدعومًا.
+
+npm warn deprecated are-we-there-yet@1.0.6: لم يعد هذا البرنامج مدعومًا.
+
+تحذير من npm: تم إيقاف دعم الإصدار hoek@0.7.6 وفقًا لسياسة دعم hapi (hapi.im/support). يُرجى الترقية إلى أحدث إصدار للاستفادة من أفضل الميزات وإصلاحات الأخطاء والتحديثات الأمنية. في حال تعذر الترقية حاليًا، يتوفر دعم مدفوع للإصدارات القديمة (hapi.im/commercial).
+
+npm warn deprecated gauge@1.2.7: لم يعد هذا البرنامج مدعومًا.
+
+تحذير npm: تم إيقاف استخدام json3@3.2.6: يرجى استخدام كائن JSON الأصلي بدلاً من JSON 3
+
+تحذير من npm: تم نقل وحدة hawk@0.10.2 إلى @hapi/hawk. يُرجى التأكد من التبديل إلى الإصدار الأحدث، حيث لم يعد هذا التوزيع مدعومًا وقد يحتوي على أخطاء ومشاكل أمنية خطيرة.
+
+تحذير من npm: تم إيقاف دعم الإصدار cryptiles@0.1.0 وفقًا لسياسة دعم hapi (hapi.im/support). يُرجى الترقية إلى أحدث إصدار للاستفادة من أفضل الميزات وإصلاحات الأخطاء والتحديثات الأمنية. في حال تعذر الترقية حاليًا، يتوفر دعم مدفوع للإصدارات القديمة (hapi.im/commercial).
+
+تحذير من npm: تم إيقاف دعم الإصدار boom@0.3.1 وفقًا لسياسة دعم hapi (hapi.im/support). يُرجى الترقية إلى أحدث إصدار للاستفادة من أفضل الميزات وإصلاحات الأخطاء والتحديثات الأمنية. في حال تعذر الترقية حاليًا، يتوفر دعم مدفوع للإصدارات القديمة (hapi.im/commercial).
+
+تحذير من npm: تم إيقاف دعم الإصدار hoek@0.4.2 وفقًا لسياسة دعم hapi (hapi.im/support). يُرجى الترقية إلى أحدث إصدار للاستفادة من أفضل الميزات وإصلاحات الأخطاء والتحديثات الأمنية. في حال تعذر الترقية حاليًا، يتوفر دعم مدفوع للإصدارات القديمة (hapi.im/commercial).
+
+تحذير من npm: تم إيقاف babel-eslint@10.1.0: أصبح babel-eslint الآن @babel/eslint-parser. لن تتلقى هذه الحزمة أي تحديثات بعد الآن.
+
+تحذير npm: تم نقل وظيفة @npmcli/move-file@1.1.2 إلى @npmcli/fs
+
+تحذير من npm: تم إيقاف استخدام uuid@3.4.0: يُرجى الترقية إلى الإصدار 7 أو أحدث. قد تستخدم الإصدارات القديمة Math.random() في بعض الحالات، وهو أمر معروف بمشاكله. راجع https://v8.dev/blog/math-random لمزيد من التفاصيل.
+
+تحذير من npm: تم إيقاف استخدام uuid@3.4.0: يُرجى الترقية إلى الإصدار 7 أو أحدث. قد تستخدم الإصدارات القديمة Math.random() في بعض الحالات، وهو أمر معروف بمشاكله. راجع https://v8.dev/blog/math-random لمزيد من التفاصيل.
+
+تحذير من npm: حزمة fca-unofficial@1.3.10 مهملة: هذه الحزمة غير مدعومة.
+
+تحذير من npm: يبدو أن بيانات ملف ansi-black@https://registry.npmjs.org/ansi-black/-/ansi-black-0.1.1.tgz (sha512-DJHaF2SRzBb9wZBgqIJNjjTa7JUJTO98sHeTS1sDopyKKRopL1KpaJ20R6W2f/ZGras8bYyIZDtNwYOVXNgNFg==) تالفة. جارٍ المحاولة مرة أخرى.
+
+تحذير من npm: يبدو أن بيانات ملف ansi-bgblack@https://registry.npmjs.org/ansi-bgblack/-/ansi-bgblack-0.1.1.tgz (sha512-KIF19t+HOYOorUnHTOhZpeZ3bJsjzStBG2hSGM0WZ8YQQe4c7lj9CtwnucscJDPrNwfdz6GBF+pFkVfvHBq6uw==) تالفة. جارٍ المحاولة مرة أخرى.
+
+تحذير من npm: يبدو أن بيانات ملف ansi-bgblack@https://registry.npmjs.org/ansi-bgblack/-/ansi-bgblack-0.1.1.tgz (sha512-KIF19t+HOYOorUnHTOhZpeZ3bJsjzStBG2hSGM0WZ8YQQe4c7lj9CtwnucscJDPrNwfdz6GBF+pFkVfvHBq6uw==) تالفة. جارٍ المحاولة مرة أخرى.
+
+خطأ في npm: sha512-DJHaF2SRzBb9wZBgqIJNjjTa7JUJTO98sHeTS1sDopyKKRopL1KpaJ20R6W2f/ZGras8bYyIZDtNwYOVXNgNFg== فشل التحقق من سلامة البيانات عند استخدام sha512: المطلوب sha512-DJHaF2SRzBb9wZBgqIJNjjTa7JUJTO98sHeTS1sDopyKKRopL1KpaJ20R6W2f/ZGras8bYyIZDtNwYOVXNgNFg== ولكن تم الحصول على sha512-hl7re02lWus7lFOUG6zexhoF5gssAfG5whyr/fOWK9hxNjUFLTjhbU/b4UHWOh2dbJu9/STSUv+80uWYzYkbTQ==. (1958 بايت)
+
+لم تكتمل العملية "/bin/sh -c npm install --legacy-peer-deps --force && npm rebuild sqlite3 --build-from-source" بنجاح: رمز الخروج: 1

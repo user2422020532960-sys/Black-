@@ -1,0 +1,131 @@
+{
+  "message": "[5/6] RUN npm install --legacy-peer-deps",
+  "timestamp": "2026-04-05T18:42:31.276178195Z",
+  "severity": "error",
+  "children": [
+    {
+      "message": "npm warn EBADENGINE Unsupported engine {\nnpm warn EBADENGINE   package: 'dns@0.2.2',\nnpm warn EBADENGINE   required: { node: '>= 0.10.0 < 0.11.0' },\nnpm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }\nnpm warn EBADENGINE }\n",
+      "timestamp": "2026-04-05T18:42:53.072982328Z"
+    },
+    {
+      "message": "npm warn EBADENGINE Unsupported engine {\nnpm warn EBADENGINE   package: 'hawk@0.10.2',\nnpm warn EBADENGINE   required: { node: '0.8.x' },\nnpm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }\nnpm warn EBADENGINE }\n",
+      "timestamp": "2026-04-05T18:42:53.075912504Z"
+    },
+    {
+      "message": "npm warn EBADENGINE Unsupported engine {\nnpm warn EBADENGINE   package: 'hoek@0.7.6',\nnpm warn EBADENGINE   required: { node: '0.8.x' },\nnpm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }\nnpm warn EBADENGINE }\n",
+      "timestamp": "2026-04-05T18:42:53.076415599Z"
+    },
+    {
+      "message": "npm warn EBADENGINE Unsupported engine {\nnpm warn EBADENGINE   package: 'tomahawk@0.1.6',\nnpm warn EBADENGINE   required: { node: '>= 0.8.0 < 0.11.0' },\nnpm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }\nnpm warn EBADENGINE }\n",
+      "timestamp": "2026-04-05T18:42:53.082740219Z"
+    },
+    {
+      "message": "npm warn EBADENGINE Unsupported engine {\nnpm warn EBADENGINE   package: '@neoaz07/nkxfca@1.0.10',\nnpm warn EBADENGINE   required: { node: '>=22.0.0' },\nnpm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }\nnpm warn EBADENGINE }\n",
+      "timestamp": "2026-04-05T18:42:53.08425146Z"
+    },
+    {
+      "message": "npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation\n",
+      "timestamp": "2026-04-05T18:42:58.804962797Z"
+    },
+    {
+      "message": "npm warn deprecated tinyurl@1.1.7: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.\n",
+      "timestamp": "2026-04-05T18:42:59.208840064Z"
+    },
+    {
+      "message": "npm warn deprecated string-similarity@4.0.4: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.\n",
+      "timestamp": "2026-04-05T18:42:59.436133837Z"
+    },
+    {
+      "message": "npm warn deprecated sntp@0.1.2: This module moved to @hapi/sntp. Please make sure to switch over as this distribution is no longer supported and may contain bugs and critical security issues.\n",
+      "timestamp": "2026-04-05T18:42:59.815212012Z"
+    },
+    {
+      "message": "npm warn deprecated prebuild-install@7.1.3: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.\n",
+      "timestamp": "2026-04-05T18:43:00.656522999Z"
+    },
+    {
+      "message": "npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142\n",
+      "timestamp": "2026-04-05T18:43:01.431716871Z"
+    },
+    {
+      "message": "npm warn deprecated node-uuid@1.4.8: Use uuid module instead\n",
+      "timestamp": "2026-04-05T18:43:01.475939539Z"
+    },
+    {
+      "message": "npm warn deprecated har-validator@5.1.5: this library is no longer supported\n",
+      "timestamp": "2026-04-05T18:43:02.305819421Z"
+    },
+    {
+      "message": "npm warn deprecated hoek@0.7.6: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).\n",
+      "timestamp": "2026-04-05T18:43:02.868892067Z"
+    },
+    {
+      "message": "npm warn deprecated json3@3.2.6: Please use the native JSON object instead of JSON 3\n",
+      "timestamp": "2026-04-05T18:43:03.146988276Z"
+    },
+    {
+      "message": "npm warn deprecated cryptiles@0.1.0: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).\n",
+      "timestamp": "2026-04-05T18:43:03.429689211Z"
+    },
+    {
+      "message": "npm warn deprecated hawk@0.10.2: This module moved to @hapi/hawk. Please make sure to switch over as this distribution is no longer supported and may contain bugs and critical security issues.\n",
+      "timestamp": "2026-04-05T18:43:03.746802547Z"
+    },
+    {
+      "message": "npm warn deprecated boom@0.3.1: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).\n",
+      "timestamp": "2026-04-05T18:43:04.008682648Z"
+    },
+    {
+      "message": "npm warn deprecated babel-eslint@10.1.0: babel-eslint is now @babel/eslint-parser. This package will no longer receive updates.\n",
+      "timestamp": "2026-04-05T18:43:04.396710347Z"
+    },
+    {
+      "message": "npm warn deprecated @npmcli/move-file@1.1.2: This functionality has been moved to @npmcli/fs\n",
+      "timestamp": "2026-04-05T18:43:04.673913308Z"
+    },
+    {
+      "message": "npm warn deprecated raw-body@1.3.0: No longer maintained. Please upgrade to a stable version.\n",
+      "timestamp": "2026-04-05T18:43:06.412173918Z"
+    },
+    {
+      "message": "npm warn deprecated hoek@0.4.2: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).\n",
+      "timestamp": "2026-04-05T18:43:07.373285373Z"
+    },
+    {
+      "message": "npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.\n",
+      "timestamp": "2026-04-05T18:43:07.458680584Z"
+    },
+    {
+      "message": "npm warn deprecated hoek@0.4.2: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).\n",
+      "timestamp": "2026-04-05T18:43:08.234109331Z"
+    },
+    {
+      "message": "npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.\n",
+      "timestamp": "2026-04-05T18:43:08.268470609Z"
+    },
+    {
+      "message": "npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.\n",
+      "timestamp": "2026-04-05T18:43:08.290459383Z"
+    },
+    {
+      "message": "npm warn deprecated request@2.16.6: request has been deprecated, see https://github.com/request/request/issues/3142\n",
+      "timestamp": "2026-04-05T18:43:08.303055906Z"
+    },
+    {
+      "message": "npm warn tarball tarball data for ansi-black@https://registry.npmjs.org/ansi-black/-/ansi-black-0.1.1.tgz (sha512-DJHaF2SRzBb9wZBgqIJNjjTa7JUJTO98sHeTS1sDopyKKRopL1KpaJ20R6W2f/ZGras8bYyIZDtNwYOVXNgNFg==) seems to be corrupted. Trying again.\n",
+      "timestamp": "2026-04-05T18:44:13.935014643Z"
+    },
+    {
+      "message": "npm warn tarball tarball data for ansi-bgblack@https://registry.npmjs.org/ansi-bgblack/-/ansi-bgblack-0.1.1.tgz (sha512-KIF19t+HOYOorUnHTOhZpeZ3bJsjzStBG2hSGM0WZ8YQQe4c7lj9CtwnucscJDPrNwfdz6GBF+pFkVfvHBq6uw==) seems to be corrupted. Trying again.\n",
+      "timestamp": "2026-04-05T18:44:13.947591533Z"
+    },
+    {
+      "message": "npm warn tarball tarball data for ansi-bgblack@https://registry.npmjs.org/ansi-bgblack/-/ansi-bgblack-0.1.1.tgz (sha512-KIF19t+HOYOorUnHTOhZpeZ3bJsjzStBG2hSGM0WZ8YQQe4c7lj9CtwnucscJDPrNwfdz6GBF+pFkVfvHBq6uw==) seems to be corrupted. Trying again.\n",
+      "timestamp": "2026-04-05T18:45:24.061229216Z"
+    },
+    {
+      "message": "npm error code EINTEGRITY\nnpm error sha512-DJHaF2SRzBb9wZBgqIJNjjTa7JUJTO98sHeTS1sDopyKKRopL1KpaJ20R6W2f/ZGras8bYyIZDtNwYOVXNgNFg== integrity checksum failed when using sha512: wanted sha512-DJHaF2SRzBb9wZBgqIJNjjTa7JUJTO98sHeTS1sDopyKKRopL1KpaJ20R6W2f/ZGras8bYyIZDtNwYOVXNgNFg== but got sha512-hl7re02lWus7lFOUG6zexhoF5gssAfG5whyr/fOWK9hxNjUFLTjhbU/b4UHWOh2dbJu9/STSUv+80uWYzYkbTQ==. (1958 bytes)\nnpm notice\nnpm notice New major version of npm available! 10.8.2 -> 11.12.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1\nnpm notice To update run: npm install -g npm@11.12.1\nnpm notice\nnpm error A complete log of this run can be found in: /root/.npm/_logs/2026-04-05T18_42_49_612Z-debug-0.log\n",
+      "timestamp": "2026-04-05T18:45:27.93102649Z"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+
+
+terrific-motivation
+
+production
+
+
+1
+
+30 days or $5.00 left
+
+
+
+Mahora-Black
+Deployments
+Variables
+Metrics
+Settings
+Unexposed service
+us-west2
+1 Replica
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+History
+
+Mahora-Black
+/
+21998c1a
+Active
+
+Apr 9, 2026, 2:32 PM GMT+2
+Details
+Build Logs
+Deploy Logs
+Network Flow Logs
+Filter and search logs
+
+You reached the start of the range
+Apr 9, 2026, 2:32 PM
+{"message":"✅ account.txt already exists","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:45.483888250Z"}
+{"message":"Uptime server running on port 8080","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:45.483895866Z"}
+{"message":"Starting Container","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:45.639529693Z"}
+{"message":"]2;Black\\─","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486709217Z"}
+{"message":"","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486715957Z"}
+{"message":"Black Mahora","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486719563Z"}
+{"message":"BlackBot V2@1.5.35- Powered by Saint","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486722668Z"}
+{"message":"Created by Saint with ♡","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486726090Z"}
+{"message":"Source code: https://github.com/saint03/Goat-Bot-V2","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486729506Z"}
+{"message":"ALL VERSIONS NOT RELEASED HERE ARE FAKE","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486733070Z"}
+{"message":"\u001b[38;2;245;171;0m START LOGGING IN \u001b[0m","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486736109Z"}
+{"message":"\u001b[90m19:32:46 09/04/2026\u001b[0m \u001b[92m LOGIN FACEBOOK:\u001b[0m جاري تسجيل الدخول","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486739647Z"}
+{"message":"\u001b[90m19:32:46 09/04/2026\u001b[0m \u001b[93m FCA:\u001b[0m Modified By Saint 😈","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486742631Z"}
+{"message":"\u001b[90m19:32:46 09/04/2026\u001b[0m \u001b[93m APPSTATE:\u001b[0m Appstate Verified Successfully.","severity":"info","attributes":{"level":"info"},"timestamp":"2026-04-09T12:32:46.486745689Z"}
+{"message":"[UNHANDLED_REJECTION] TypeError: Cannot read properties of undefined (reading 'getCurrentUserID')","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-09T12:32:46.487443041Z"}
+{"message":"    at /app/bot/login/login.js:588:41","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-09T12:32:46.487446852Z"}
+{"message":"    at /app/node_modules/fca-eryxenx/module/loginHelper.js:1283:9","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-09T12:32:46.487450080Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-09T12:32:46.487453374Z"}
+{"message":"\r[ FCA-ERROR ] > Unhandled promise rejection (non-fatal): Cannot read properties of undefined (reading 'getCurrentUserID')","severity":"error","attributes":{"level":"error"},"timestamp":"2026-04-09T12:32:46.487456286Z"}
+
+
+Apply 2 changes
+
+
+Details
+
+Deploy
