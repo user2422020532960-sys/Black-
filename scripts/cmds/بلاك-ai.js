@@ -40,6 +40,19 @@ const userNumbers = new Map();
 const userNames = new Map();
 let userCounter = 1;
 
+const apiKeyPromptSent = new Set();
+
+function saveApiKey(newKey) {
+  try {
+    const cfgPath = require("path").join(process.cwd(), "config.json");
+    const cfg = JSON.parse(require("fs").readFileSync(cfgPath, "utf-8"));
+    if (!cfg.apiKeys) cfg.apiKeys = {};
+    cfg.apiKeys.gemini = newKey;
+    require("fs").writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), "utf-8");
+    return true;
+  } catch (_) { return false; }
+}
+
 // ─── نظام الذاكرة الدائمة ────────────────────────────────
 const MEMORY_FILE = path.join(process.cwd(), "scripts", "data", "black-memory.json");
 let _memory = null;
@@ -672,8 +685,19 @@ async function processMessage(api, event, commandName, historyKey, input) {
   const apiKey = getApiKey();
   if (!apiKey) {
     const adminIDs = global.BlackBot?.config?.adminBot || [];
-    if (adminIDs.includes(senderID)) {
-      api.sendMessage("⚠️ لا يوجد مفتاح Gemini API.\nضع المفتاح في config.json → apiKeys.gemini", threadID, null, messageID);
+    if (adminIDs.includes(senderID) && !apiKeyPromptSent.has(threadID)) {
+      apiKeyPromptSent.add(threadID);
+      api.sendMessage("مفتاح api قديم حدثه", threadID, (err, info) => {
+        if (!info) return;
+        global.BlackBot.onReply.set(info.messageID, {
+          commandName,
+          messageID: info.messageID,
+          author: senderID,
+          isApiKeyPrompt: true,
+          promptThreadID: threadID,
+          delete: () => global.BlackBot.onReply.delete(info.messageID)
+        });
+      }, messageID);
     }
     return;
   }
@@ -779,9 +803,20 @@ module.exports = {
 
   onReply: async function ({ api, event, Reply }) {
     const { threadID, senderID } = event;
-    if (senderID !== Reply.author) return;
     const input = (event.body || "").trim();
     if (!input) return;
+
+    if (Reply.isApiKeyPrompt) {
+      const adminIDs = global.BlackBot?.config?.adminBot || [];
+      if (!adminIDs.includes(senderID)) return;
+      Reply.delete();
+      apiKeyPromptSent.delete(Reply.promptThreadID || threadID);
+      const saved = saveApiKey(input);
+      api.sendMessage(saved ? "✅ تم تحديث مفتاح API" : "❌ فشل حفظ المفتاح", threadID, null, event.messageID);
+      return;
+    }
+
+    if (senderID !== Reply.author) return;
 
     if (input.length > 1000) {
       Reply.delete();
