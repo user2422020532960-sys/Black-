@@ -1,6 +1,9 @@
 const fs = require("fs-extra");
+const path = require("path");
 const nullAndUndefined = [undefined, null];
 const leven = require('leven');
+const mutedUsers = require(path.join(process.cwd(), "scripts", "data", "mutedUsersManager.js"));
+
 // const { config } = global.BlackBot;
 // const { utils } = global;
 
@@ -73,6 +76,11 @@ function getRoleConfig(utils, command, isGroup, threadData, commandName) {
 function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, commandName, message, lang) {
         const config = global.BlackBot.config;
         const { adminBot, hideNotiMessage } = config;
+
+        // check if user is muted (help spam protection)
+        if (mutedUsers.isMuted(senderID) && !adminBot.includes(senderID)) {
+                return true;
+        }
 
         // check if user banned
         const infoBannedUser = userData.banned;

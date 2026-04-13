@@ -1,6 +1,25 @@
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
+const mutedUsers = require(path.join(process.cwd(), "scripts", "data", "mutedUsersManager.js"));
+
+// ─── تتبع طلبات قائمة الأوامر لكل مستخدم ────────────────
+const helpRequestLog = new Map(); // senderID -> [timestamp, ...]
+const HELP_SPAM_LIMIT = 5;
+const HELP_SPAM_WINDOW = 60 * 1000; // 60 ثانية
+
+function checkHelpSpam(senderID) {
+    const now = Date.now();
+    const adminIDs = global.BlackBot?.config?.adminBot || [];
+    if (adminIDs.includes(senderID)) return false;
+
+    if (!helpRequestLog.has(senderID)) helpRequestLog.set(senderID, []);
+    const times = helpRequestLog.get(senderID).filter(t => now - t < HELP_SPAM_WINDOW);
+    times.push(now);
+    helpRequestLog.set(senderID, times);
+
+    return times.length >= HELP_SPAM_LIMIT;
+}
 
 const gifList = [
     "https://h.top4top.io/p_3677567ew0.gif",
@@ -147,6 +166,13 @@ module.exports = {
     },
 
     onStart: async function({ message, args, prefix, event }) {
+        const { senderID } = event;
+        if (checkHelpSpam(senderID)) {
+            mutedUsers.mute(senderID);
+            await message.reply("أنت مقيد الآن كود");
+            return;
+        }
+
         const commands = global.BlackBot.commands;
         const { threadID } = event;
         const itemsPerPage = 40;
