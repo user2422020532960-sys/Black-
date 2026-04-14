@@ -9,11 +9,20 @@ let selfPingTimer = null;
 let watchdogTimer = null;
 
 let lastActivityTime = Date.now();
-const WATCHDOG_SILENCE_MS = 10 * 60 * 1000; // 10 minutes of silence → reconnect MQTT
-const WATCHDOG_CHECK_MS  =  3 * 60 * 1000;  // Check every 3 minutes
+let checkpointDetected = false;
+
+const WATCHDOG_SILENCE_MS = 15 * 60 * 1000;
+const WATCHDOG_CHECK_MS  =  5 * 60 * 1000;
 
 function recordActivity() {
   lastActivityTime = Date.now();
+}
+
+function setCheckpointDetected(val) {
+  checkpointDetected = val;
+  if (val) {
+    global.utils.log.warn("KEEP_ALIVE", "🔴 Checkpoint detected — pausing all Facebook API calls. Please unlock the account from the Facebook app.");
+  }
 }
 
 function getRandomMs(minMinutes, maxMinutes) {
@@ -22,7 +31,13 @@ function getRandomMs(minMinutes, maxMinutes) {
   return Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
 }
 
+function isCheckpointError(err) {
+  const msg = (err?.message || err?.error || String(err)).toLowerCase();
+  return msg.includes("checkpoint") || msg.includes("account_inactive") || msg.includes("auth_error");
+}
+
 async function doPing() {
+  if (checkpointDetected) return;
   try {
     const api = global.BlackBot?.fcaApi;
     if (!api) return;
@@ -32,22 +47,30 @@ async function doPing() {
     const userAgent =
       global.BlackBot.config?.facebookAccount?.userAgent ||
       "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.7103.60 Mobile Safari/537.36";
-    const endpoints = ["https://mbasic.facebook.com/", "https://m.facebook.com/"];
-    const url = endpoints[Math.floor(Math.random() * endpoints.length)];
-    await axios.get(url, {
+    await axios.get("https://mbasic.facebook.com/", {
       headers: {
         "cookie": cookieStr,
         "user-agent": userAgent,
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "accept-language": "ar,en-US;q=0.8,en;q=0.5",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "accept-language": "ar,en-US;q=0.7,en;q=0.3",
+        "accept-encoding": "gzip, deflate, br",
         "connection": "keep-alive",
+        "upgrade-insecure-requests": "1",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
         "cache-control": "max-age=0",
       },
       timeout: 15000,
+      maxRedirects: 3,
     });
     global.utils.log.info("KEEP_ALIVE", "✅ Ping sent — account stays active");
     recordActivity();
   } catch (e) {
+    if (isCheckpointError(e)) {
+      setCheckpointDetected(true);
+      return;
+    }
     global.utils.log.warn("KEEP_ALIVE", "⚠️ Ping failed: " + (e.message || e));
   }
 }
@@ -61,6 +84,7 @@ async function doSelfPing() {
 }
 
 async function doSaveCookies() {
+  if (checkpointDetected) return;
   try {
     const api = global.BlackBot?.fcaApi;
     if (!api) return;
@@ -78,19 +102,18 @@ async function doSaveCookies() {
 }
 
 async function tryReconnectMqtt() {
+  if (checkpointDetected) return false;
   try {
     const api = global.BlackBot?.fcaApi;
     const cb  = global.BlackBot?.callBackListen;
     if (!api || !cb) return false;
 
-    // Stop current listening gracefully
     if (global.BlackBot.Listening && typeof global.BlackBot.Listening.stopListening === "function") {
       try { global.BlackBot.Listening.stopListening(); } catch (_) {}
     }
 
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 3000));
 
-    // Restart MQTT, forwarding events to the original handler
     global.BlackBot.Listening = api.listenMqtt(function (err, event) {
       if (err) return;
       try { cb(null, event); } catch (_) {}
@@ -98,6 +121,10 @@ async function tryReconnectMqtt() {
 
     return true;
   } catch (e) {
+    if (isCheckpointError(e)) {
+      setCheckpointDetected(true);
+      return false;
+    }
     global.utils.log.warn("KEEP_ALIVE", "⚠️ MQTT reconnect error: " + (e.message || e));
     return false;
   }
@@ -106,6 +133,7 @@ async function tryReconnectMqtt() {
 function scheduleWatchdog() {
   if (watchdogTimer) clearInterval(watchdogTimer);
   watchdogTimer = setInterval(async () => {
+    if (checkpointDetected) return;
     const silenceMs = Date.now() - lastActivityTime;
     if (silenceMs >= WATCHDOG_SILENCE_MS) {
       global.utils.log.warn(
@@ -125,7 +153,7 @@ function scheduleWatchdog() {
 
 function schedulePing() {
   if (pingTimer) clearTimeout(pingTimer);
-  const delay = getRandomMs(4, 8);
+  const delay = getRandomMs(8, 15);
   const minutes = Math.round(delay / 60000);
   pingTimer = setTimeout(async () => {
     await doPing();
@@ -136,7 +164,7 @@ function schedulePing() {
 
 function scheduleSelfPing() {
   if (selfPingTimer) clearInterval(selfPingTimer);
-  selfPingTimer = setInterval(doSelfPing, 4 * 60 * 1000);
+  selfPingTimer = setInterval(doSelfPing, 5 * 60 * 1000);
 }
 
 function scheduleSave() {
@@ -145,6 +173,7 @@ function scheduleSave() {
 }
 
 async function doAcceptInbox() {
+  if (checkpointDetected) return;
   try {
     const api = global.BlackBot?.fcaApi;
     if (!api) return;
@@ -159,20 +188,34 @@ async function doAcceptInbox() {
             try {
               await api.handleMessageRequest(thread.threadID, true);
               accepted++;
-              await new Promise(r => setTimeout(r, 400));
-            } catch (e) {}
+              await new Promise(r => setTimeout(r, 1500));
+            } catch (e) {
+              if (isCheckpointError(e)) {
+                setCheckpointDetected(true);
+                return;
+              }
+            }
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        if (isCheckpointError(e)) {
+          setCheckpointDetected(true);
+          return;
+        }
+      }
     }
     if (accepted > 0)
       global.utils.log.info("INBOX", `✅ قبلت ${accepted} رسالة خاص معلقة`);
-  } catch (e) {}
+  } catch (e) {
+    if (isCheckpointError(e)) {
+      setCheckpointDetected(true);
+    }
+  }
 }
 
 function scheduleInbox() {
   if (inboxTimer) clearInterval(inboxTimer);
-  inboxTimer = setInterval(doAcceptInbox, 2 * 60 * 1000);
+  inboxTimer = setInterval(doAcceptInbox, 15 * 60 * 1000);
 }
 
 module.exports = function startKeepAlive() {
@@ -182,18 +225,19 @@ module.exports = function startKeepAlive() {
   if (selfPingTimer) clearInterval(selfPingTimer);
   if (watchdogTimer) clearInterval(watchdogTimer);
 
+  checkpointDetected = false;
   lastActivityTime = Date.now();
 
   global.utils.log.info(
     "KEEP_ALIVE",
-    "🚀 Keep-alive started | Ping 4–8m | Self-ping 4m | Watchdog 3m | Cookies 6h"
+    "🚀 Keep-alive started | Ping 8–15m | Self-ping 5m | Watchdog 5m | Cookies 6h | Inbox 15m"
   );
 
   schedulePing();
   scheduleSave();
   scheduleSelfPing();
   scheduleWatchdog();
-  doAcceptInbox();
+  setTimeout(doAcceptInbox, 30000);
   scheduleInbox();
   doSelfPing();
 };
@@ -212,3 +256,4 @@ module.exports.stop = function () {
 };
 
 module.exports.recordActivity = recordActivity;
+module.exports.setCheckpointDetected = setCheckpointDetected;
