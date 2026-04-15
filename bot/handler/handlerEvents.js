@@ -294,24 +294,22 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                         const aiTrigger = "بلاك";
                         if (body && body.startsWith(aiTrigger) && !body.startsWith(prefix)) {
                                 const aiInput = body.slice(aiTrigger.length).trim();
-                                if (aiInput) {
-                                        if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, aiTrigger, message, langCode))
-                                                return;
-                                        const aiCommand = BlackBot.commands.get(aiTrigger) || BlackBot.commands.get(BlackBot.aliases.get(aiTrigger));
-                                        if (aiCommand) {
-                                                const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, aiCommand);
-                                                createMessageSyntaxError(aiTrigger);
-                                                try {
-                                                        await aiCommand.onStart({
-                                                                ...parameters,
-                                                                args: aiInput.split(/ +/),
-                                                                commandName: aiTrigger,
-                                                                getLang: getText2,
-                                                                removeCommandNameFromBody: () => aiInput
-                                                        });
-                                                } catch (err) {
-                                                        log.err("AI ROUTE", "Error routing to AI", err);
-                                                }
+                                if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, aiTrigger, message, langCode))
+                                        return;
+                                const aiCommand = BlackBot.commands.get(aiTrigger) || BlackBot.commands.get(BlackBot.aliases.get(aiTrigger));
+                                if (aiCommand) {
+                                        const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, aiCommand);
+                                        createMessageSyntaxError(aiTrigger);
+                                        try {
+                                                await aiCommand.onStart({
+                                                        ...parameters,
+                                                        args: aiInput ? aiInput.split(/ +/) : [],
+                                                        commandName: aiTrigger,
+                                                        getLang: getText2,
+                                                        removeCommandNameFromBody: () => aiInput
+                                                });
+                                        } catch (err) {
+                                                log.err("AI ROUTE", "Error routing to AI", err);
                                         }
                                 }
                                 return;
