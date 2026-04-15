@@ -488,7 +488,10 @@ module.exports = {
     const userMsg = event.body?.trim();
     if (!userMsg) return;
     if (event.senderID === api.getCurrentUserID()) return;
-    try { api.setMessageReaction("🔑", messageID, () => {}, true); } catch (_) {}
+    if (userMsg === "🔑") {
+      try { api.setMessageReaction("🔑", messageID, () => {}, true); } catch (_) {}
+      return;
+    }
     await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
   }
 };
