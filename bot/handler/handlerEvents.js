@@ -444,19 +444,27 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
 
                                 createMessageSyntaxError(commandName);
                                 const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, command);
-                                await command.onStart({
-                                        ...parameters,
-                                        args,
-                                        commandName,
-                                        getLang: getText2,
-                                        removeCommandNameFromBody
-                                });
+                                const CMD_TIMEOUT = 30000;
+                                await Promise.race([
+                                        command.onStart({
+                                                ...parameters,
+                                                args,
+                                                commandName,
+                                                getLang: getText2,
+                                                removeCommandNameFromBody
+                                        }),
+                                        new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("CMD_TIMEOUT"), { isTimeout: true })), CMD_TIMEOUT))
+                                ]);
                                 timestamps[senderID] = dateNow;
                                 log.info("CALL COMMAND", `${commandName} | ${userData.name} | ${senderID} | ${threadID} | ${args.join(" ")}`);
                         }
                         catch (err) {
+                                if (err.isTimeout) {
+                                        log.warn("CALL COMMAND", `Command ${commandName} timed out after 30s`);
+                                        return;
+                                }
                                 log.err("CALL COMMAND", `An error occurred when calling the command ${commandName}`, err);
-                                return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2))));
+                                return await message.reply(utils.getText({ lang: langCode, head: "handlerEvents" }, "errorOccurred", time, commandName, removeHomeDir(err.stack ? err.stack.split("\n").slice(0, 5).join("\n") : JSON.stringify(err, null, 2)))).catch(() => {});
                         }
                 }
 
