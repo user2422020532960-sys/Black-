@@ -484,10 +484,11 @@ module.exports = {
   },
 
   onReply: async function ({ api, event, Reply, message, commandName }) {
-    const { senderID, threadID } = event;
+    const { senderID, threadID, messageID } = event;
     const userMsg = event.body?.trim();
     if (!userMsg) return;
     if (event.senderID === api.getCurrentUserID()) return;
+    try { api.setMessageReaction("🔑", messageID, () => {}, true); } catch (_) {}
     await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
   }
 };
