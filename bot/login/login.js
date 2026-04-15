@@ -595,6 +595,15 @@ async function startBot(_0x3cad9e) {
         log.warn("E2EE", "تعذّر تفعيل E2EE: " + _e2eeErr.message);
       }
       log.info("LOGIN FACEBOOK", getText("login", 'loginSuccess'));
+      try {
+        const _savedAppState = _0x4d5048.getAppState();
+        if (_savedAppState && _savedAppState.length > 0) {
+          fs.writeFileSync(_0x41cca2, JSON.stringify(_savedAppState, null, 2));
+          log.info("APPSTATE", "Session saved to account.txt");
+        }
+      } catch (_saveErr) {
+        log.warn("APPSTATE", "Could not save session: " + _saveErr.message);
+      }
       let _0x70f374 = false;
       global.botID = _0x4d5048.getCurrentUserID();
       logColor("#f5ab00", createLine("BOT INFO"));
