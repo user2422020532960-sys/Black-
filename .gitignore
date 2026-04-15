@@ -48,3 +48,8 @@ replit.nix
 .cache/
 .config/
 .local/
+
+# ===========================
+# Sensitive account data
+# ===========================
+account.txt
