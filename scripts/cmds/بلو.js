@@ -97,7 +97,9 @@ module.exports = {
 
         blueIntervals[threadID] = setInterval(() => {
             if (!blueIntervals[threadID]) return;
-            api.sendMessage(customText, threadID);
+            Promise.resolve()
+              .then(() => api.sendMessage(customText, threadID))
+              .catch(() => {});
         }, intervalMs);
     },
 
