@@ -446,3 +446,84 @@ function buildUserContext(senderID, threadID) {
     const isSaim = senderID === DEVELOPER_IDS[1];
     lines.push(`[ 👤 المُرسل: ${isSaim ? "سايم — مطوّرك الحقيقي" : "مطوّرك"}${nameDisplay ? ` (${nameDisplay})` : ""} (ID: ${senderID}) ]`);
     lines.push(`[ ✅ هوية مؤكدة 100% بالـ
+ID ]`);
+  } else if (profile.role === 'admin') {
+    lines.push(`[ 👤 المُرسل: مشرف${nameDisplay ? ` (${nameDisplay})` : ""} (ID: ${senderID}) ]`);
+  } else {
+    lines.push(`[ 👤 المُرسل: مستخدم #${getUserNumber(senderID)}${nameDisplay ? ` (${nameDisplay})` : ""} ]`);
+  }
+
+  if (profile.gender && profile.gender !== "unknown") {
+    lines.push(`[ الجنس: ${profile.gender === "female" ? "أنثى" : "ذكر"} ]`);
+  }
+
+  const memCtx = buildMemoryContext(senderID, threadID);
+  if (memCtx) lines.push(memCtx);
+
+  return lines.join("\n");
+}
+
+module.exports = {
+  config: {
+    name: "بلاك-ai",
+    aliases: ["بلاك", "black"],
+    version: "2.0",
+    author: "Saim",
+    countDown: 3,
+    role: 0,
+    description: { ar: "بوت ذكاء اصطناعي جزائري" },
+    category: "AI",
+    guide: { ar: "{p}{n} [رسالتك]" }
+  },
+
+  onStart: async function ({ api, event, args, message }) {
+    const { threadID, messageID, senderID } = event;
+    const userMsg = args.join(" ").trim();
+    if (!userMsg) return message.reply("واش تبي؟");
+
+    await fetchUserName(api, senderID);
+    detectNameFromText(userMsg, senderID);
+    extractFacts(userMsg, senderID, threadID);
+
+    const profile = getProfile(senderID);
+    const gender = profile.gender !== "unknown" ? profile.gender : null;
+    const genderDetected = detectGenderFromText(userMsg);
+    if (genderDetected && profile.gender === "unknown") {
+      profile.gender = genderDetected;
+      const umem = getUserMem(senderID);
+      umem.gender = genderDetected;
+      saveMemory();
+    }
+
+    if (!conversationHistory.has(senderID)) conversationHistory.set(senderID, []);
+    const history = conversationHistory.get(senderID);
+    const userContext = buildUserContext(senderID, threadID);
+
+    const userContent = userContext ? `${userContext}\n${userMsg}` : userMsg;
+    history.push({ role: "user", content: userContent });
+    if (history.length > 20) history.splice(0, history.length - 20);
+
+    const apiKey = global.BlackBot?.config?.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return message.reply("مفتاح API ناقص.");
+
+    try {
+      const resp = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: history.map(h => ({ role: h.role, parts: [{ text: h.content }] })),
+          generationConfig: { temperature: 0.9, maxOutputTokens: 300 }
+        },
+        { headers: { "Content-Type": "application/json" }, timeout: 20000 }
+      );
+
+      const reply = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!reply) return message.reply("ما جاوبش.");
+
+      history.push({ role: "model", content: reply });
+      return message.reply(reply);
+    } catch (e) {
+      return message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى.");
+    }
+  }
+};
