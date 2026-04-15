@@ -488,9 +488,17 @@ module.exports = {
     const userMsg = event.body?.trim();
     if (!userMsg) return;
     if (event.senderID === api.getCurrentUserID()) return;
-    if (userMsg === "🔑") {
-      try { api.setMessageReaction("🔑", messageID, () => {}, true); } catch (_) {}
-      return;
+    if (/^AIza[0-9A-Za-z\-_]{35,}$/.test(userMsg)) {
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const configPath = path.join(process.cwd(), "config.json");
+        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        config.GEMINI_API_KEY = userMsg;
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+        if (global.BlackBot?.config) global.BlackBot.config.GEMINI_API_KEY = userMsg;
+      } catch (_) {}
+      return message.reply("تم حفظ مفتاح Gemini API بنجاح ✅");
     }
     await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
   }
