@@ -1,8 +1,21 @@
+const _restoreTimers = new Map();
+const _processing = new Map();
+
+async function buildNickname(text, uid, usersData) {
+  let name = text;
+  if (/\{userName\}/gi.test(name)) {
+    const uname = await usersData.getName(uid).catch(() => uid);
+    name = name.replace(/\{userName\}/gi, uname);
+  }
+  if (/\{userID\}/gi.test(name)) name = name.replace(/\{userID\}/gi, uid);
+  return name;
+}
+
 module.exports = {
   config: {
     name: "ضع",
     aliases: ["da3"],
-    version: "2.1",
+    version: "3.0",
     author: "Saint",
     countDown: 5,
     role: 0,
@@ -20,6 +33,8 @@ module.exports = {
     const adminBot = global.BlackBot.config.adminBot || [];
 
     if (text === "off") {
+      global.da3SilentMode = global.da3SilentMode || {};
+      delete global.da3SilentMode[threadID];
       await threadsData.set(threadID, {}, "data.da3Lock");
       return message.reply("◈ تم إيقاف قفل الكنيات");
     }
@@ -30,30 +45,26 @@ module.exports = {
     if (!targets.length) return message.reply("◈ لا يوجد أعضاء لتغيير كنياتهم");
 
     const nicknames = {};
-    const BATCH = 1;
-    const DELAY_BETWEEN = 4000;
-    const DELAY_IN_BATCH = 0;
+    const BATCH = 4;
+    const DELAY_BETWEEN = 900;
     let done = 0;
+    let failed = 0;
 
     for (let i = 0; i < targets.length; i += BATCH) {
       const batch = targets.slice(i, i + BATCH);
-      const promises = batch.map(async (uid, idx) => {
-        if (idx > 0) await new Promise(r => setTimeout(r, DELAY_IN_BATCH * idx));
+      await Promise.all(batch.map(async (uid) => {
         try {
-          let name = text;
-          if (/\{userName\}/gi.test(name)) name = name.replace(/\{userName\}/gi, await usersData.getName(uid).catch(() => uid));
-          if (/\{userID\}/gi.test(name)) name = name.replace(/\{userID\}/gi, uid);
+          const name = await buildNickname(text, uid, usersData);
           await api.changeNickname(name, threadID, uid);
           nicknames[uid] = name;
           done++;
-        } catch (e) {}
-      });
-      await Promise.all(promises);
+        } catch (e) { failed++; }
+      }));
       if (i + BATCH < targets.length) await new Promise(r => setTimeout(r, DELAY_BETWEEN));
     }
 
     await threadsData.set(threadID, { enable: true, nickname: text, nicknames }, "data.da3Lock");
-    message.reply(`◈ تم تغيير ${done}/${targets.length} كنية بنجاح`);
+    message.reply(`◈ تم تغيير ${done}/${targets.length} كنية بنجاح${failed ? ` (${failed} فشل)` : ""}`);
   },
 
   onEvent: async function ({ api, event, threadsData }) {
@@ -71,8 +82,24 @@ module.exports = {
     const { participant_id } = logMessageData;
     const restoreNickname = lock.nicknames?.[participant_id] ?? lock.nickname ?? "";
 
-    try {
-      await api.changeNickname(restoreNickname, threadID, participant_id);
-    } catch (e) {}
+    const key = `${threadID}:${participant_id}`;
+
+    if (_processing.get(key)) return;
+
+    if (_restoreTimers.has(key)) {
+      clearTimeout(_restoreTimers.get(key));
+    }
+
+    const timer = setTimeout(async () => {
+      _restoreTimers.delete(key);
+      if (_processing.get(key)) return;
+      _processing.set(key, true);
+      try {
+        await api.changeNickname(restoreNickname, threadID, participant_id);
+      } catch (_) {}
+      _processing.delete(key);
+    }, 800);
+
+    _restoreTimers.set(key, timer);
   }
 };
