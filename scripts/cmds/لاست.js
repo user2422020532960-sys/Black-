@@ -159,6 +159,7 @@ module.exports = {
           targetName,
           delete: () => global.BlackBot.onReply.delete(info.messageID)
         });
+        setTimeout(() => global.BlackBot.onReply.delete(info.messageID), 120000);
       }, messageID);
     }
 
@@ -189,6 +190,7 @@ module.exports = {
           targetName,
           delete: () => global.BlackBot.onReply.delete(info.messageID)
         });
+        setTimeout(() => global.BlackBot.onReply.delete(info.messageID), 120000);
       }, messageID);
     }
 
@@ -221,13 +223,15 @@ module.exports = {
 
     api.sendMessage(msg, threadID, (err, info) => {
       if (!info) return;
-      global.BlackBot.onReply.set(info.messageID, {
+      const replyData = {
         commandName,
         messageID: info.messageID,
         author: senderID,
         allGroups,
         delete: () => global.BlackBot.onReply.delete(info.messageID)
-      });
+      };
+      global.BlackBot.onReply.set(info.messageID, replyData);
+      setTimeout(() => global.BlackBot.onReply.delete(info.messageID), 120000);
     }, messageID);
   },
 
