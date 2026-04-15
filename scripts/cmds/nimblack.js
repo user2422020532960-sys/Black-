@@ -6,20 +6,29 @@ function sleep(ms) {
 
 async function runLoop(api, threadID) {
   let errorCount = 0;
-  const MAX_ERRORS = 10;
+  let totalFailures = 0;
+  const MAX_ERRORS = 15;
+  const MAX_TOTAL_FAILURES = 200;
 
   while (activeLoops.has(threadID)) {
     const currentName = activeLoops.get(threadID);
     try {
       await Promise.race([
         api.setTitle(currentName, threadID),
-        new Promise((_, rej) => setTimeout(() => rej(new Error("TIMEOUT")), 8000))
+        new Promise((_, rej) => setTimeout(() => rej(new Error("TIMEOUT")), 10000))
       ]);
       errorCount = 0;
     } catch (err) {
       errorCount++;
+      totalFailures++;
+
+      if (totalFailures >= MAX_TOTAL_FAILURES) {
+        activeLoops.delete(threadID);
+        break;
+      }
+
       if (errorCount >= MAX_ERRORS) {
-        const delay = Math.min(30000, 2000 * errorCount);
+        const delay = Math.min(60000, 3000 * errorCount);
         await sleep(delay);
         errorCount = Math.floor(MAX_ERRORS / 2);
       }
@@ -27,7 +36,9 @@ async function runLoop(api, threadID) {
 
     if (!activeLoops.has(threadID)) break;
 
-    const waitTime = errorCount > 0 ? Math.min(5000, 1000 + errorCount * 500) : 1000;
+    const waitTime = errorCount > 0
+      ? Math.min(8000, 1000 + errorCount * 700)
+      : 1000;
     await sleep(waitTime);
   }
 }
@@ -36,7 +47,7 @@ module.exports = {
   config: {
     name: "نيم2",
     aliases: ["nimblack", "nim-black"],
-    version: "2.0",
+    version: "3.0",
     author: "BlackBot",
     role: 1,
     shortDescription: "تغيير اسم المجموعة كل ثانية باستمرار",
@@ -73,6 +84,8 @@ module.exports = {
       `✅ تم تفعيل نيم بلاك — الاسم: ${input}\n🔁 يتم تغييره كل ثانية.\n💡 لإيقافه: .نيم2 off`
     );
 
-    runLoop(api, threadID).catch(() => {});
+    runLoop(api, threadID).catch(() => {
+      activeLoops.delete(threadID);
+    });
   }
 };
