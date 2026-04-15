@@ -52,6 +52,18 @@ function startProject() {
 
 startProject();
 
+setInterval(() => {
+  if (typeof global.gc === "function") {
+    try { global.gc(); } catch (_) {}
+  }
+  const used = process.memoryUsage();
+  const mbHeap = Math.round(used.heapUsed / 1024 / 1024);
+  if (mbHeap > 450) {
+    console.log(`[MEM] Heap ${mbHeap}MB — high usage, triggering GC`);
+    if (typeof global.gc === "function") try { global.gc(); } catch (_) {}
+  }
+}, 60000);
+
 const express = require('express');
 const app = express();
 
