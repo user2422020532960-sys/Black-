@@ -1,17 +1,20 @@
 const createFuncMessage = global.utils.message;
 const handlerCheckDB = require("./handlerCheckData.js");
 
-// Rate limiter: track message count per thread per second window
-const _threadMsgCount = new Map();
+const MAX_BODY_LENGTH = 8000;
 const _FLOOD_THRESHOLD = 8;
+const QUEUE_CONCURRENCY = 3;
+
+const _threadMsgCount = new Map();
+const _processingQueues = new Map();
+let _activeWorkers = 0;
 
 function isThreadFlooding(threadID) {
   const now = Math.floor(Date.now() / 1000);
   const key = `${threadID}:${now}`;
   const count = (_threadMsgCount.get(key) || 0) + 1;
   _threadMsgCount.set(key, count);
-  // Clean old entries every 1000 calls
-  if (_threadMsgCount.size > 200) {
+  if (_threadMsgCount.size > 300) {
     for (const [k] of _threadMsgCount) {
       if (!k.endsWith(`:${now}`) && !k.endsWith(`:${now - 1}`))
         _threadMsgCount.delete(k);
@@ -19,6 +22,50 @@ function isThreadFlooding(threadID) {
   }
   return count > _FLOOD_THRESHOLD;
 }
+
+function enqueueForThread(threadID, task) {
+  if (!_processingQueues.has(threadID))
+    _processingQueues.set(threadID, []);
+  const queue = _processingQueues.get(threadID);
+  if (queue.length >= 10) return;
+  queue.push(task);
+  if (_activeWorkers < QUEUE_CONCURRENCY)
+    drainQueue(threadID);
+}
+
+async function drainQueue(threadID) {
+  const queue = _processingQueues.get(threadID);
+  if (!queue || queue.length === 0) {
+    _processingQueues.delete(threadID);
+    return;
+  }
+  _activeWorkers++;
+  const task = queue.shift();
+  try {
+    await Promise.race([
+      task(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("TASK_TIMEOUT")), 25000))
+    ]);
+  } catch (err) {
+    if (err.message !== "TASK_TIMEOUT")
+      console.error("[QUEUE_ERROR]", err?.message || err);
+  } finally {
+    _activeWorkers--;
+    if ((queue?.length || 0) > 0)
+      drainQueue(threadID).catch(() => {});
+    else
+      _processingQueues.delete(threadID);
+  }
+}
+
+setInterval(() => {
+  for (const [id, q] of _processingQueues) {
+    if (!q || q.length === 0) _processingQueues.delete(id);
+  }
+  if (typeof global.gc === "function") {
+    try { global.gc(); } catch (_) {}
+  }
+}, 120000);
 
 module.exports = (
   api,
@@ -48,7 +95,6 @@ module.exports = (
   );
 
   return async function (event) {
-    // ✅ Anti-Inbox Protection
     if (
       global.BlackBot.config.antiInbox == true &&
       (event.senderID == event.threadID ||
@@ -58,82 +104,91 @@ module.exports = (
     )
       return;
 
+    if (event.type === "typ" || event.type === "presence" || event.type === "read_receipt")
+      return;
+
     const isMessage = event.type === "message" || event.type === "message_reply";
 
     if (isMessage) {
+      const body = (event.body || "");
+      if (body.length > MAX_BODY_LENGTH) {
+        event.body = body.slice(0, MAX_BODY_LENGTH);
+      }
+
       const prefix = (global.utils.getPrefix && global.utils.getPrefix(event.threadID)) || global.BlackBot?.config?.prefix || ".";
-      const body = (event.body || "").trim();
-      const isCommand = body.startsWith(prefix);
-      const isAiTrigger = body.startsWith("بلاك");
+      const trimmedBody = event.body.trim();
+      const isCommand = trimmedBody.startsWith(prefix);
+      const isAiTrigger = trimmedBody.startsWith("بلاك");
       const hasOnReply = event.messageReply && global.BlackBot.onReply.has(event.messageReply.messageID);
       const isAdminDM = !event.isGroup && (global.BlackBot.config.adminBot || []).includes(event.senderID);
 
-      if (!isCommand && !isAiTrigger && !hasOnReply && !isAdminDM) {
+      if (!isCommand && !isAiTrigger && !hasOnReply && !isAdminDM)
         return;
-      }
+
+      if (isCommand && isThreadFlooding(event.threadID))
+        return;
     }
 
-    if (event.type === "typ" || event.type === "presence" || event.type === "read_receipt") {
-      return;
-    }
+    const threadID = event.threadID || "global";
 
-    const message = createFuncMessage(api, event);
-    await handlerCheckDB(usersData, threadsData, event);
+    enqueueForThread(threadID, async () => {
+      const message = createFuncMessage(api, event);
+      await handlerCheckDB(usersData, threadsData, event);
 
-    const handlerChat = await handlerEvents(event, message);
-    if (!handlerChat) return;
+      const handlerChat = await handlerEvents(event, message);
+      if (!handlerChat) return;
 
-    const {
-      onAnyEvent,
-      onFirstChat,
-      onStart,
-      onChat,
-      onReply,
-      onEvent,
-      handlerEvent,
-      onReaction,
-      typ,
-      presence,
-      read_receipt
-    } = handlerChat;
+      const {
+        onAnyEvent,
+        onFirstChat,
+        onStart,
+        onChat,
+        onReply,
+        onEvent,
+        handlerEvent,
+        onReaction
+      } = handlerChat;
 
-    switch (event.type) {
-      case "message":
-      case "message_reply":
-      case "message_unsend":
-        onStart();
-        onChat();
-        onReply();
-        break;
+      switch (event.type) {
+        case "message":
+        case "message_reply":
+        case "message_unsend":
+          await safeRun(onStart);
+          await safeRun(onChat);
+          await safeRun(onReply);
+          break;
 
-      case "event":
-        handlerEvent();
-        onEvent();
-        break;
+        case "event":
+          await safeRun(handlerEvent);
+          await safeRun(onEvent);
+          break;
 
-      case "message_reaction":
-        onReaction();
-
-        try {
-          const cfg = global.BlackBot.config.reactUnsend || {};
-          const adminIDs = global.BlackBot.config.adminBot || [];
-          const isAdmin = adminIDs.includes(event.userID || event.senderID);
-
-          if (
-            cfg.enable &&
-            cfg.emojis?.includes(event.reaction) &&
-            (!cfg.onlyAdmin || isAdmin)
-          ) {
-            await api.unsendMessage(event.messageID);
+        case "message_reaction":
+          await safeRun(onReaction);
+          try {
+            const cfg = global.BlackBot.config.reactUnsend || {};
+            const adminIDs = global.BlackBot.config.adminBot || [];
+            const isAdmin = adminIDs.includes(event.userID || event.senderID);
+            if (cfg.enable && cfg.emojis?.includes(event.reaction) && (!cfg.onlyAdmin || isAdmin))
+              await api.unsendMessage(event.messageID);
+          } catch (err) {
+            console.error("[React-Unsend]", err?.message);
           }
-        } catch (err) {
-          console.error("❌ React-Unsend Error:", err);
-        }
+          break;
 
-        break;
-
-      default:
-        break;
-    }
+        default:
+          break;
+      }
+    });
   };
 };
+
+async function safeRun(fn) {
+  if (typeof fn !== "function") return;
+  try {
+    await fn();
+  } catch (err) {
+    if (err?.message !== "TASK_TIMEOUT")
+      console.error("[SAFE_RUN]", err?.message || err);
+  }
+}
