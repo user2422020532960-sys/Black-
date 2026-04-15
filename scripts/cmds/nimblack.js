@@ -17,7 +17,7 @@ async function runLoop(api, threadID) {
 
 module.exports = {
   config: {
-    name: "نيم بلاك",
+    name: "نيم2",
     aliases: ["nimblack", "nim-black"],
     version: "1.0",
     author: "BlackBot",
