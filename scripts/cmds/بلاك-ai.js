@@ -527,7 +527,18 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
   if (history.length > 20) history.splice(0, history.length - 20);
 
   const apiKey = global.BlackBot?.config?.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) return message.reply("مفتاح API ناقص.");
+  if (!apiKey) {
+    return message.reply("⚠️ مفتاح Gemini API ناقص — أرسل المفتاح كرد على هذه الرسالة.", (err, info) => {
+      if (err || !info) return;
+      try {
+        global.BlackBot.onReply.set(info.messageID, {
+          commandName,
+          author: senderID,
+          messageID: info.messageID
+        });
+      } catch (_) {}
+    });
+  }
 
   try {
     const resp = await axios.post(
