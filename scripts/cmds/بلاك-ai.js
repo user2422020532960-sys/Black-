@@ -476,54 +476,72 @@ module.exports = {
     guide: { ar: "{p}{n} [رسالتك]" }
   },
 
-  onStart: async function ({ api, event, args, message }) {
+  onStart: async function ({ api, event, args, message, commandName }) {
     const { threadID, messageID, senderID } = event;
     const userMsg = args.join(" ").trim();
     if (!userMsg) return message.reply("واش تبي؟");
+    await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
+  },
 
-    await fetchUserName(api, senderID);
-    detectNameFromText(userMsg, senderID);
-    extractFacts(userMsg, senderID, threadID);
-
-    const profile = getProfile(senderID);
-    const gender = profile.gender !== "unknown" ? profile.gender : null;
-    const genderDetected = detectGenderFromText(userMsg);
-    if (genderDetected && profile.gender === "unknown") {
-      profile.gender = genderDetected;
-      const umem = getUserMem(senderID);
-      umem.gender = genderDetected;
-      saveMemory();
-    }
-
-    if (!conversationHistory.has(senderID)) conversationHistory.set(senderID, []);
-    const history = conversationHistory.get(senderID);
-    const userContext = buildUserContext(senderID, threadID);
-
-    const userContent = userContext ? `${userContext}\n${userMsg}` : userMsg;
-    history.push({ role: "user", content: userContent });
-    if (history.length > 20) history.splice(0, history.length - 20);
-
-    const apiKey = global.BlackBot?.config?.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) return message.reply("مفتاح API ناقص.");
-
-    try {
-      const resp = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: history.map(h => ({ role: h.role, parts: [{ text: h.content }] })),
-          generationConfig: { temperature: 0.9, maxOutputTokens: 300 }
-        },
-        { headers: { "Content-Type": "application/json" }, timeout: 20000 }
-      );
-
-      const reply = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (!reply) return message.reply("ما جاوبش.");
-
-      history.push({ role: "model", content: reply });
-      return message.reply(reply);
-    } catch (e) {
-      return message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى.");
-    }
+  onReply: async function ({ api, event, Reply, message, commandName }) {
+    const { senderID, threadID } = event;
+    const userMsg = event.body?.trim();
+    if (!userMsg) return;
+    if (event.senderID === api.getCurrentUserID()) return;
+    await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
   }
 };
+
+async function handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID }) {
+  await fetchUserName(api, senderID);
+  detectNameFromText(userMsg, senderID);
+  extractFacts(userMsg, senderID, threadID);
+
+  const profile = getProfile(senderID);
+  const genderDetected = detectGenderFromText(userMsg);
+  if (genderDetected && profile.gender === "unknown") {
+    profile.gender = genderDetected;
+    const umem = getUserMem(senderID);
+    umem.gender = genderDetected;
+    saveMemory();
+  }
+
+  if (!conversationHistory.has(senderID)) conversationHistory.set(senderID, []);
+  const history = conversationHistory.get(senderID);
+  const userContext = buildUserContext(senderID, threadID);
+
+  const userContent = userContext ? `${userContext}\n${userMsg}` : userMsg;
+  history.push({ role: "user", content: userContent });
+  if (history.length > 20) history.splice(0, history.length - 20);
+
+  const apiKey = global.BlackBot?.config?.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) return message.reply("مفتاح API ناقص.");
+
+  try {
+    const resp = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: history.map(h => ({ role: h.role, parts: [{ text: h.content }] })),
+        generationConfig: { temperature: 0.9, maxOutputTokens: 300 }
+      },
+      { headers: { "Content-Type": "application/json" }, timeout: 20000 }
+    );
+
+    const reply = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!reply) return message.reply("ما جاوبش.");
+
+    history.push({ role: "model", content: reply });
+
+    message.reply(reply, (err, info) => {
+      if (err || !info) return;
+      global.BlackBot.onReply.set(info.messageID, {
+        commandName,
+        author: senderID,
+        messageID: info.messageID
+      });
+    });
+  } catch (e) {
+    return message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى.");
+  }
+}
