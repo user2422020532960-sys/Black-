@@ -18,7 +18,7 @@ module.exports = {
   config: {
     name: "فيديو",
     aliases: ["v", "video", "دونلواد", "يوتيوب", "yt"],
-    version: "3.0",
+    version: "1.0",
     author: "Saint",
     countDown: 8,
     role: 0,
