@@ -53,3 +53,8 @@ replit.nix
 # Sensitive account data
 # ===========================
 account.txt
+
+# ===========================
+# Temp download files
+# ===========================
+tmp_autolink/
