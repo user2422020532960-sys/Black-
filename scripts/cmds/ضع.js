@@ -75,20 +75,15 @@ module.exports = {
     if (!lock?.enable) return;
 
     const botID = api.getCurrentUserID();
-    const adminBot = global.BlackBot.config.adminBot || [];
-
-    if (author === botID || adminBot.includes(author)) return;
+    if (author === botID) return;
 
     const { participant_id } = logMessageData;
     const restoreNickname = lock.nicknames?.[participant_id] ?? lock.nickname ?? "";
 
     const key = `${threadID}:${participant_id}`;
-
     if (_processing.get(key)) return;
 
-    if (_restoreTimers.has(key)) {
-      clearTimeout(_restoreTimers.get(key));
-    }
+    if (_restoreTimers.has(key)) clearTimeout(_restoreTimers.get(key));
 
     const timer = setTimeout(async () => {
       _restoreTimers.delete(key);
@@ -98,7 +93,7 @@ module.exports = {
         await api.changeNickname(restoreNickname, threadID, participant_id);
       } catch (_) {}
       _processing.delete(key);
-    }, 800);
+    }, 1000);
 
     _restoreTimers.set(key, timer);
   }
