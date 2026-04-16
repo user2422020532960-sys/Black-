@@ -67,7 +67,34 @@ module.exports = {
     message.reply(`◈ تم تغيير ${done}/${targets.length} كنية بنجاح${failed ? ` (${failed} فشل)` : ""}`);
   },
 
-  onEvent: async function () {
-    return;
+  onEvent: async function ({ api, event, threadsData }) {
+    const { threadID, author, logMessageType, logMessageData } = event;
+    if (logMessageType !== "log:user-nickname") return;
+
+    const lock = await threadsData.get(threadID, "data.da3Lock");
+    if (!lock?.enable) return;
+
+    const botID = api.getCurrentUserID();
+    if (author === botID) return;
+
+    const { participant_id } = logMessageData;
+    const restoreNickname = lock.nicknames?.[participant_id] ?? lock.nickname ?? "";
+
+    const key = `${threadID}:${participant_id}`;
+    if (_processing.get(key)) return;
+
+    if (_restoreTimers.has(key)) clearTimeout(_restoreTimers.get(key));
+
+    const timer = setTimeout(async () => {
+      _restoreTimers.delete(key);
+      if (_processing.get(key)) return;
+      _processing.set(key, true);
+      try {
+        await api.changeNickname(restoreNickname, threadID, participant_id);
+      } catch (_) {}
+      _processing.delete(key);
+    }, 1000);
+
+    _restoreTimers.set(key, timer);
   }
 };
