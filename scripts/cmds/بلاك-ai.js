@@ -484,22 +484,45 @@ module.exports = {
   },
 
   onReply: async function ({ api, event, Reply, message, commandName }) {
-    const { senderID, threadID, messageID } = event;
-    const userMsg = event.body?.trim();
+    const { senderID, threadID } = event;
+    let userMsg = event.body?.trim();
     if (!userMsg) return;
     if (event.senderID === api.getCurrentUserID()) return;
-    if (/^AIza[0-9A-Za-z\-_]{35,}$/.test(userMsg)) {
+
+    if (Reply?.type === "awaitApiKey") {
+      const cleanedKey = userMsg.replace(/^["'`]+|["'`]+$/g, "").replace(/\s+/g, "").trim();
+      if (!/^AIza[0-9A-Za-z\-_]{35,}$/.test(cleanedKey)) {
+        return message.reply("⚠️ المفتاح غير صحيح — يجب أن يبدأ بـ AIza ويكون بطول صحيح. أرسل المفتاح كرد على هذه الرسالة.", (err, info) => {
+          if (err || !info) return;
+          try {
+            global.BlackBot.onReply.set(info.messageID, {
+              commandName,
+              author: senderID,
+              messageID: info.messageID,
+              type: "awaitApiKey",
+              originalUserMsg: Reply.originalUserMsg
+            });
+          } catch (_) {}
+        });
+      }
+
       try {
-        const fs = require("fs");
-        const path = require("path");
-        const configPath = path.join(process.cwd(), "config.json");
-        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        config.GEMINI_API_KEY = userMsg;
-        fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
-        if (global.BlackBot?.config) global.BlackBot.config.GEMINI_API_KEY = userMsg;
+        const configPath = require("path").join(process.cwd(), "config.json");
+        const config = JSON.parse(require("fs").readFileSync(configPath, "utf-8"));
+        config.GEMINI_API_KEY = cleanedKey;
+        require("fs").writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+        if (global.BlackBot?.config) global.BlackBot.config.GEMINI_API_KEY = cleanedKey;
       } catch (_) {}
-      return message.reply("تم حفظ مفتاح Gemini API بنجاح ✅");
+
+      await message.reply("✅ تم حفظ مفتاح Gemini API — جاري تشغيل ردك...");
+
+      const originalMsg = Reply.originalUserMsg;
+      if (originalMsg) {
+        await handleAIMessage({ api, event, userMsg: originalMsg, message, commandName, senderID, threadID });
+      }
+      return;
     }
+
     await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
   }
 };
@@ -542,7 +565,9 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
           global.BlackBot.onReply.set(info.messageID, {
             commandName,
             author: senderID,
-            messageID: info.messageID
+            messageID: info.messageID,
+            type: "awaitApiKey",
+            originalUserMsg: userMsg
           });
         } catch (_) {}
       });
