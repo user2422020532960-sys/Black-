@@ -476,11 +476,11 @@ module.exports = {
     guide: { ar: "{p}{n} [رسالتك]" }
   },
 
-  onStart: async function ({ api, event, args, message, commandName }) {
+  onStart: async function ({ api, event, args, message }) {
     const { threadID, messageID, senderID } = event;
     const userMsg = args.join(" ").trim();
     if (!userMsg) return message.reply("واش تبي؟");
-    await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
+    await handleAIMessage({ api, event, userMsg, message, commandName: "بلاك-ai", senderID, threadID });
   },
 
   onReply: async function ({ api, event, Reply, message, commandName }) {
@@ -489,6 +489,8 @@ module.exports = {
     if (!userMsg) return;
     if (event.senderID === api.getCurrentUserID()) return;
 
+    const CANONICAL_NAME = "بلاك-ai";
+
     if (Reply?.type === "awaitApiKey") {
       const cleanedKey = userMsg.replace(/^["'`]+|["'`]+$/g, "").replace(/\s+/g, "").trim();
       if (!/^AIza[0-9A-Za-z\-_]{35,}$/.test(cleanedKey)) {
@@ -496,7 +498,7 @@ module.exports = {
           if (err || !info) return;
           try {
             global.BlackBot.onReply.set(info.messageID, {
-              commandName,
+              commandName: CANONICAL_NAME,
               author: senderID,
               messageID: info.messageID,
               type: "awaitApiKey",
@@ -518,12 +520,12 @@ module.exports = {
 
       const originalMsg = Reply.originalUserMsg;
       if (originalMsg) {
-        await handleAIMessage({ api, event, userMsg: originalMsg, message, commandName, senderID, threadID });
+        await handleAIMessage({ api, event, userMsg: originalMsg, message, commandName: CANONICAL_NAME, senderID, threadID });
       }
       return;
     }
 
-    await handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID });
+    await handleAIMessage({ api, event, userMsg, message, commandName: CANONICAL_NAME, senderID, threadID });
   }
 };
 
