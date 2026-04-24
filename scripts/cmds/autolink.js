@@ -95,16 +95,48 @@ module.exports = {
   onStart: async function () {},
 
   onChat: async function ({ api, event }) {
-    if (!event || !event.body) return;
+    if (!event) return;
     if (event.senderID === api.getCurrentUserID()) return;
 
     const { threadID, messageID, senderID } = event;
-    const body = event.body;
+    const body = event.body || "";
 
-    const linkMatches = body.match(/(https?:\/\/[^\s<>]+)/g);
-    if (!linkMatches) return;
+    const collected = new Set();
 
-    const links = [...new Set(linkMatches)].filter(isSupportedLink);
+    const bodyMatches = body.match(/(https?:\/\/[^\s<>]+)/g);
+    if (bodyMatches) bodyMatches.forEach(u => collected.add(u));
+
+    if (Array.isArray(event.attachments)) {
+      for (const att of event.attachments) {
+        const candidates = [
+          att?.url,
+          att?.facebookUrl,
+          att?.source,
+          att?.target?.url,
+          att?.title,
+          att?.description
+        ].filter(v => typeof v === "string");
+        for (const c of candidates) {
+          const m = c.match(/(https?:\/\/[^\s<>"']+)/g);
+          if (m) m.forEach(u => collected.add(u));
+        }
+      }
+    }
+
+    if (collected.size === 0) return;
+
+    const cleanedLinks = [...collected].map(u => {
+      try {
+        const parsed = new URL(u);
+        if (parsed.hostname.includes("l.facebook.com") || parsed.hostname.includes("lm.facebook.com")) {
+          const real = parsed.searchParams.get("u");
+          if (real) return decodeURIComponent(real);
+        }
+        return u;
+      } catch { return u; }
+    });
+
+    const links = [...new Set(cleanedLinks)].filter(isSupportedLink);
     if (links.length === 0) return;
 
     const key = `${threadID}:${messageID}`;
