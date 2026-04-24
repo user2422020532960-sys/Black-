@@ -567,11 +567,12 @@ function buildUserContext(senderID, threadID) {
   } else {
     lines.push(`[ المُرسل: مستخدم عادي${nameDisplay ? ` (${nameDisplay})` : ""} ]`);
   }
-  lines.push(`[ ⚠️ تنبيه استعمال الاسم: تعرف اسم المُرسل للسياق فقط (تستعمله إذا سُئلت "وش اسمي؟" أو في حالات خاصة جداً)، لكن ممنوع تناديه باسمه في ردك العادي. خاطبه دائماً بـ "أنت/راك/نتا/كيراك" بلا ذكر اسمه. ]`);
-
-  if (profile.gender && profile.gender !== "unknown") {
-    lines.push(`[ الجنس: ${profile.gender === "female" ? "أنثى" : "ذكر"} ]`);
-  }
+  lines.push(`[ ⚠️ قواعد المخاطبة الإلزامية:
+- تعرف اسم المُرسل وجنسه ودوره داخلياً، لكن ممنوع تذكر أي شيء منها في ردك العادي.
+- ممنوع تنادي المُرسل بأي وصف أو اسم: لا "يا [اسم]"، لا "ولد"، لا "فتاة"، لا "مستخدم"، لا أرقام، لا "ياخي"، لا "صديقي"، لا "حبيبي"، لا أي لقب.
+- ممنوع تخبر المُرسل بدوره (مطوّر/مشرف/عادي) إلا إذا سألك مباشرة "أنا شكون عندك؟" أو ما يشابهه.
+- ادخل في الموضوع مباشرة بلا تحية تعريفية، خاطبه بـ "أنت/راك/نتا/كيراك" فقط.
+- إذا سألك "وش اسمي؟" أو "تعرف على؟" — فقط حينها تذكر اسمه. ]`);
 
   const memCtx = buildMemoryContext(senderID, threadID);
   if (memCtx) lines.push(memCtx);
@@ -605,20 +606,27 @@ module.exports = {
 
     const { senderID, threadID, body, messageID } = event;
 
+    if (!global.__blackai_seen) global.__blackai_seen = new Map();
+    if (!global.__blackai_seen_hash) global.__blackai_seen_hash = new Map();
+    const seen = global.__blackai_seen;
+    const seenHash = global.__blackai_seen_hash;
+    const now = Date.now();
+
     if (messageID) {
-      if (!global.__blackai_seen) {
-        global.__blackai_seen = new Map();
-      }
-      const seen = global.__blackai_seen;
-      const now = Date.now();
       if (seen.has(messageID)) return;
       seen.set(messageID, now);
       if (seen.size > 1000) {
         const cutoff = now - 5 * 60 * 1000;
-        for (const [k, t] of seen) {
-          if (t < cutoff) seen.delete(k);
-        }
+        for (const [k, t] of seen) if (t < cutoff) seen.delete(k);
       }
+    }
+    const contentKey = `${threadID}:${senderID}:${(body || "").trim().slice(0, 200)}`;
+    const lastTs = seenHash.get(contentKey);
+    if (lastTs && now - lastTs < 8000) return;
+    seenHash.set(contentKey, now);
+    if (seenHash.size > 1000) {
+      const cutoff = now - 60 * 1000;
+      for (const [k, t] of seenHash) if (t < cutoff) seenHash.delete(k);
     }
 
     const keyMatch = body.match(/AIza[0-9A-Za-z\-_]{35,}/);
@@ -792,7 +800,7 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
               const text = (isLastUser && userContext) ? `${userContext}\n${h.content}` : h.content;
               return { role: h.role === "model" ? "model" : "user", parts: [{ text }] };
             }),
-            generationConfig: { temperature: 0.7, topP: 0.9, topK: 40, maxOutputTokens: 512 }
+            generationConfig: { temperature: 0.85, topP: 0.92, topK: 50, maxOutputTokens: 400 }
           },
           { headers: { "Content-Type": "application/json" }, timeout: 25000 }
         );
