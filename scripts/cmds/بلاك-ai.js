@@ -640,7 +640,19 @@ module.exports = {
       const userMsg = (body || "").trim();
       if (!userMsg) return;
       await handleAIMessage({ api, event, userMsg, message, commandName: "بلاك-ai", senderID, threadID });
+      return;
     }
+
+    const trimmedBody = (body || "").trim();
+    if (!trimmedBody) return;
+
+    const prefix = global.BlackBot?.config?.prefix || ".";
+    if (trimmedBody.startsWith(prefix)) return;
+
+    const nameRegex = /(^|[\s،,.!؟?:؛()\-—])(بلاك|black)([\s،,.!؟?:؛()\-—]|$)/i;
+    if (!nameRegex.test(trimmedBody)) return;
+
+    await handleAIMessage({ api, event, userMsg: trimmedBody, message, commandName: "بلاك-ai", senderID, threadID });
   },
 
   onReply: async function ({ api, event, Reply, message, commandName }) {
