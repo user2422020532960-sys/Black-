@@ -108,6 +108,7 @@ module.exports = (
       return;
 
     const isMessage = event.type === "message" || event.type === "message_reply";
+    let _onChatOnly = false;
 
     if (isMessage) {
       const body = (event.body || "");
@@ -121,13 +122,17 @@ module.exports = (
       const isAiTrigger = trimmedBody.startsWith("بلاك");
       const hasOnReply = event.messageReply && global.BlackBot.onReply.has(event.messageReply.messageID);
       const isAdminDM = !event.isGroup && (global.BlackBot.config.adminBot || []).includes(event.senderID);
+      const hasOnChatHandlers = Array.isArray(global.BlackBot.onChat) && global.BlackBot.onChat.length > 0;
 
-      if (!isCommand && !isAiTrigger && !hasOnReply && !isAdminDM)
-        return;
+      if (!isCommand && !isAiTrigger && !hasOnReply && !isAdminDM) {
+        if (!hasOnChatHandlers) return;
+        _onChatOnly = true;
+      }
 
       if (isCommand && isThreadFlooding(event.threadID))
         return;
     }
+    event._onChatOnly = _onChatOnly;
 
     const threadID = event.threadID || "global";
 
@@ -153,9 +158,13 @@ module.exports = (
         case "message":
         case "message_reply":
         case "message_unsend":
-          await safeRun(onStart);
-          await safeRun(onChat);
-          await safeRun(onReply);
+          if (event._onChatOnly) {
+            await safeRun(onChat);
+          } else {
+            await safeRun(onStart);
+            await safeRun(onChat);
+            await safeRun(onReply);
+          }
           break;
 
         case "event":

@@ -103,6 +103,13 @@ module.exports = {
     const { threadID, messageID } = event;
     const body = event.body || "";
 
+    const prefix =
+      (global.utils?.getPrefix && global.utils.getPrefix(threadID)) ||
+      global.BlackBot?.config?.prefix ||
+      ".";
+    if (body.trim().startsWith(prefix)) return;
+    if (body.trim().startsWith("بلاك")) return;
+
     const collected = new Set();
     const bodyMatches = body.match(/(https?:\/\/[^\s<>]+)/g);
     if (bodyMatches) bodyMatches.forEach(u => collected.add(u));
