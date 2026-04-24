@@ -488,7 +488,7 @@ module.exports = {
   onStart: async function ({ api, event, args, message }) {
     const { threadID, messageID, senderID } = event;
     const userMsg = args.join(" ").trim();
-    if (!userMsg) return message.reply("واش تبي؟");
+    if (!userMsg) return message.reply(formatStyledReply("واش تبي؟"));
     await handleAIMessage({ api, event, userMsg, message, commandName: "بلاك-ai", senderID, threadID });
   },
 
@@ -515,9 +515,9 @@ module.exports = {
             config.GEMINI_API_KEY = newKey;
             require("fs").writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
             if (global.BlackBot?.config) global.BlackBot.config.GEMINI_API_KEY = newKey;
-            return message.reply("✅ تم تحديث مفتاح Gemini API بالمفتاح الجديد.");
+            return message.reply(formatStyledReply("✅ تم تحديث المفتاح بالمفتاح الجديد."));
           } catch (e) {
-            return message.reply("⚠️ فشل حفظ المفتاح: " + e.message);
+            return message.reply(formatStyledReply("⚠️ فشل حفظ المفتاح: " + e.message));
           }
         }
       }
@@ -546,11 +546,11 @@ module.exports = {
       const adminIDs = global.BlackBot?.config?.adminBot || [];
       const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
       if (!isAdmin) {
-        return message.reply("⚠️ المشرفين فقط يمكنهم إضافة المفتاح.");
+        return message.reply(formatStyledReply("⚠️ المشرفين فقط يمكنهم إضافة المفتاح."));
       }
       const cleanedKey = userMsg.replace(/^["'`]+|["'`]+$/g, "").replace(/\s+/g, "").trim();
       if (!/^AIza[0-9A-Za-z\-_]{35,}$/.test(cleanedKey)) {
-        return message.reply("⚠️ المفتاح غير صحيح — يجب أن يبدأ بـ AIza ويكون بطول صحيح. أرسل المفتاح كرد على هذه الرسالة.", (err, info) => {
+        return message.reply(formatStyledReply("⚠️ المفتاح غير صحيح — يجب أن يبدأ بـ AIza ويكون بطول صحيح. أرسل المفتاح كرد على هذه الرسالة."), (err, info) => {
           if (err || !info) return;
           try {
             global.BlackBot.onReply.set(info.messageID, {
@@ -572,7 +572,7 @@ module.exports = {
         if (global.BlackBot?.config) global.BlackBot.config.GEMINI_API_KEY = cleanedKey;
       } catch (_) {}
 
-      await message.reply("✅ تم حفظ مفتاح Gemini API — جاري تشغيل ردك...");
+      await message.reply(formatStyledReply("✅ تم حفظ المفتاح — جاري تشغيل ردك..."));
 
       const originalMsg = Reply.originalUserMsg;
       if (originalMsg) {
@@ -653,9 +653,9 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
       const adminIDs = global.BlackBot?.config?.adminBot || [];
       const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
       if (!isAdmin) {
-        return message.reply("⚠️ مفتاح Gemini API ناقص — يرجى التواصل مع مشرف البوت لإضافته.");
+        return message.reply(formatStyledReply("⚠️ المفتاح ناقص — يرجى التواصل مع مشرف البوت لإضافته."));
       }
-      return message.reply("⚠️ مفتاح Gemini API ناقص — أرسل المفتاح كرد على هذه الرسالة (المشرفين فقط).", (err, info) => {
+      return message.reply(formatStyledReply("⚠️ المفتاح ناقص — أرسل المفتاح كرد على هذه الرسالة (المشرفين فقط)."), (err, info) => {
         if (err || !info) return;
         try {
           global.BlackBot.onReply.set(info.messageID, {
@@ -710,7 +710,7 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
       const adminIDs = global.BlackBot?.config?.adminBot || [];
       const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
       const errInfo = isAdmin && lastErr ? `\n[للمشرف: ${lastErr.message.slice(0, 200)}]` : "";
-      try { message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى." + errInfo); } catch (_) {}
+      try { message.reply(formatStyledReply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى." + errInfo)); } catch (_) {}
       return;
     }
 
@@ -734,7 +734,7 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
     });
   } catch (e) {
     console.log("[بلاك] handler error:", e.message);
-    try { message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى."); } catch (_) {}
+    try { message.reply(formatStyledReply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى.")); } catch (_) {}
   } finally {
     processingUsers.delete(senderID);
   }
