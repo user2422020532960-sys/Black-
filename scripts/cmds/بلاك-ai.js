@@ -679,6 +679,12 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
     ];
     let reply = null;
     let lastErr = null;
+    let quotaExceeded = false;
+
+    if (global.BlackBot.aiQuotaCooldownUntil && Date.now() < global.BlackBot.aiQuotaCooldownUntil) {
+      console.log("[بلاك] AI in quota cooldown, staying silent");
+      return;
+    }
 
     for (const model of MODELS) {
       try {
@@ -700,6 +706,7 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
         const status = e.response?.status;
         const errMsg = e.response?.data?.error?.message || e.message;
         lastErr = new Error(`[${model}] ${status || ""} ${errMsg}`);
+        if (status === 429) { quotaExceeded = true; continue; }
         if (status === 400 || status === 401 || status === 403) break;
         if (status === 404) continue;
       }
@@ -707,10 +714,10 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
 
     if (!reply) {
       console.log("[بلاك] AI failed:", lastErr?.message);
-      const adminIDs = global.BlackBot?.config?.adminBot || [];
-      const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
-      const errInfo = isAdmin && lastErr ? `\n[للمشرف: ${lastErr.message.slice(0, 200)}]` : "";
-      try { message.reply(formatStyledReply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى." + errInfo)); } catch (_) {}
+      if (quotaExceeded) {
+        global.BlackBot.aiQuotaCooldownUntil = Date.now() + 10 * 60 * 1000;
+        return;
+      }
       return;
     }
 
