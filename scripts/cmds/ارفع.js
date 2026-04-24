@@ -1,6 +1,6 @@
 module.exports = {
   config: {
-    name: "ارفعه",
+    name: "ارفعه", 
     aliases: ["ارفعني"],
     version: "1.0",
     author: "Saint",
