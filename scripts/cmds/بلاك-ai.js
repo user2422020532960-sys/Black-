@@ -727,9 +727,7 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
 
     history.push({ role: "model", content: cleanReply });
 
-    const styledReply = formatStyledReply(cleanReply);
-
-    message.reply(styledReply, (err, info) => {
+    message.reply(cleanReply, (err, info) => {
       if (err || !info) return;
       try {
         global.BlackBot.onReply.set(info.messageID, {
