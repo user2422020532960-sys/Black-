@@ -492,6 +492,9 @@ module.exports = {
 
     const keyMatch = body.match(/AIza[0-9A-Za-z\-_]{35,}/);
     if (keyMatch) {
+      const replyToID = event.messageReply?.messageID;
+      const handledByOnReply = replyToID && global.BlackBot?.onReply?.has?.(replyToID);
+      if (handledByOnReply) return;
       const adminIDs = global.BlackBot?.config?.adminBot || [];
       const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
       if (isAdmin) {
