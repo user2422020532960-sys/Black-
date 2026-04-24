@@ -141,7 +141,31 @@ module.exports = {
       } catch { return u; }
     });
 
-    const links = [...new Set(cleaned)].filter(isSupportedLink);
+    function canonicalKey(u) {
+      try {
+        const p = new URL(u);
+        const host = p.hostname.replace(/^www\./, "").replace(/^m\./, "").toLowerCase();
+        const pathname = p.pathname.replace(/\/+$/, "").toLowerCase();
+        const keepParams = new Set(["v", "id", "video_id", "story_fbid"]);
+        const params = [];
+        for (const [k, v] of p.searchParams) {
+          if (keepParams.has(k.toLowerCase())) params.push(`${k.toLowerCase()}=${v}`);
+        }
+        params.sort();
+        return `${host}${pathname}${params.length ? "?" + params.join("&") : ""}`;
+      } catch { return u; }
+    }
+
+    const seenKeys = new Set();
+    const dedupedLinks = [];
+    for (const u of cleaned) {
+      if (!isSupportedLink(u)) continue;
+      const k = canonicalKey(u);
+      if (seenKeys.has(k)) continue;
+      seenKeys.add(k);
+      dedupedLinks.push(u);
+    }
+    const links = dedupedLinks;
     if (links.length === 0) {
       console.log(`[autolink] no supported links among:`, cleaned);
       return;
