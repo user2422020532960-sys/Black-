@@ -492,6 +492,11 @@ module.exports = {
     const CANONICAL_NAME = "بلاك-ai";
 
     if (Reply?.type === "awaitApiKey") {
+      const adminIDs = global.BlackBot?.config?.adminBot || [];
+      const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
+      if (!isAdmin) {
+        return message.reply("⚠️ المشرفين فقط يمكنهم إضافة المفتاح.");
+      }
       const cleanedKey = userMsg.replace(/^["'`]+|["'`]+$/g, "").replace(/\s+/g, "").trim();
       if (!/^AIza[0-9A-Za-z\-_]{35,}$/.test(cleanedKey)) {
         return message.reply("⚠️ المفتاح غير صحيح — يجب أن يبدأ بـ AIza ويكون بطول صحيح. أرسل المفتاح كرد على هذه الرسالة.", (err, info) => {
@@ -561,11 +566,16 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
 
     const apiKey = global.BlackBot?.config?.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return message.reply("⚠️ مفتاح Gemini API ناقص — أرسل المفتاح كرد على هذه الرسالة.", (err, info) => {
+      const adminIDs = global.BlackBot?.config?.adminBot || [];
+      const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
+      if (!isAdmin) {
+        return message.reply("⚠️ مفتاح Gemini API ناقص — يرجى التواصل مع مشرف البوت لإضافته.");
+      }
+      return message.reply("⚠️ مفتاح Gemini API ناقص — أرسل المفتاح كرد على هذه الرسالة (المشرفين فقط).", (err, info) => {
         if (err || !info) return;
         try {
           global.BlackBot.onReply.set(info.messageID, {
-            commandName,
+            commandName: "بلاك-ai",
             author: senderID,
             messageID: info.messageID,
             type: "awaitApiKey",
