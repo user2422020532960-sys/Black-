@@ -25,7 +25,6 @@ module.exports = {
           targetID = Object.keys(event.mentions)[0];
         }
       }
-
       if (!targetID) return;
 
       try { await api.unsendMessage(event.messageID); } catch (_) {}
