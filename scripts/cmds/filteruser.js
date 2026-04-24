@@ -43,23 +43,6 @@ module.exports = {
         },
 
         onStart: async function ({ api, args, threadsData, message, event, commandName, getLang }) {
-                let threadData = await threadsData.get(event.threadID);
-                const botID = String(api.getCurrentUserID());
-                const isBotAdminCached = threadData.adminIDs.some(id => String(id) === botID);
-                if (!isBotAdminCached) {
-                        try {
-                                const liveThreadInfo = await api.getThreadInfo(event.threadID);
-                                const isBotAdminLive = (liveThreadInfo.adminIDs || []).some(a => String(a.id || a) === botID);
-                                if (!isBotAdminLive)
-                                        return message.reply(getLang("needAdmin"));
-                                await threadsData.refreshInfo(event.threadID, liveThreadInfo);
-                                threadData = await threadsData.get(event.threadID);
-                        }
-                        catch (e) {
-                                return message.reply(getLang("needAdmin"));
-                        }
-                }
-
                 if (!isNaN(args[0])) {
                         message.reply(getLang("confirm", args[0]), (err, info) => {
                                 global.BlackBot.onReaction.set(info.messageID, {
@@ -71,12 +54,14 @@ module.exports = {
                         });
                 }
                 else if (args[0] == "die") {
-                        const threadData = await api.getThreadInfo(event.threadID);
-                        const membersBlocked = threadData.userInfo.filter(user => user.type !== "User");
+                        const liveThread = await api.getThreadInfo(event.threadID);
+                        const adminIDs = (liveThread.adminIDs || []).map(a => String(a && a.id != null ? a.id : (a && a.uid != null ? a.uid : a)));
+                        try { await threadsData.refreshInfo(event.threadID, liveThread); } catch (_) {}
+                        const membersBlocked = (liveThread.userInfo || []).filter(user => user.type !== "User");
                         const errors = [];
                         const success = [];
                         for (const user of membersBlocked) {
-                                if (user.type !== "User" && !threadData.adminIDs.some(id => id == user.id)) {
+                                if (user.type !== "User" && !adminIDs.some(id => id == String(user.id))) {
                                         try {
                                                 await api.removeUserFromGroup(user.id, event.threadID);
                                                 success.push(user.id);
@@ -106,13 +91,22 @@ module.exports = {
                 if (event.userID != author)
                         return;
                 const threadData = await threadsData.get(event.threadID);
-                const botID = api.getCurrentUserID();
+                const botID = String(api.getCurrentUserID());
+                let liveAdminIDs = [];
+                try {
+                        const liveThread = await api.getThreadInfo(event.threadID);
+                        liveAdminIDs = (liveThread.adminIDs || []).map(a => String(a && a.id != null ? a.id : (a && a.uid != null ? a.uid : a)));
+                        try { await threadsData.refreshInfo(event.threadID, liveThread); } catch (_) {}
+                }
+                catch (_) {
+                        liveAdminIDs = (threadData.adminIDs || []).map(id => String(id));
+                }
                 const membersCountLess = threadData.members.filter(member =>
                         member.count < minimum
                         && member.inGroup == true
                         // ignore bot and admin box
-                        && member.userID != botID
-                        && !threadData.adminIDs.some(id => id == member.userID)
+                        && String(member.userID) != botID
+                        && !liveAdminIDs.includes(String(member.userID))
                 );
                 const errors = [];
                 const success = [];
