@@ -74,12 +74,47 @@ async function trySagor(url) {
 
 const _processing = new Set();
 const _doneIDs = new Map();
+const _recentLinks = new Map();
+const RECENT_LINK_WINDOW = 2 * 60 * 1000;
+
 function markDone(key) {
   _doneIDs.set(key, Date.now());
   if (_doneIDs.size > 500) {
     const cutoff = Date.now() - 30 * 60 * 1000;
     for (const [k, t] of _doneIDs) if (t < cutoff) _doneIDs.delete(k);
   }
+}
+
+function wasLinkRecentlySent(threadID, canonKey) {
+  const k = `${threadID}::${canonKey}`;
+  const t = _recentLinks.get(k);
+  if (!t) return false;
+  if (Date.now() - t > RECENT_LINK_WINDOW) {
+    _recentLinks.delete(k);
+    return false;
+  }
+  return true;
+}
+
+function markLinkSent(threadID, canonKey) {
+  _recentLinks.set(`${threadID}::${canonKey}`, Date.now());
+  if (_recentLinks.size > 1000) {
+    const cutoff = Date.now() - RECENT_LINK_WINDOW;
+    for (const [k, t] of _recentLinks) if (t < cutoff) _recentLinks.delete(k);
+  }
+}
+
+function tiktokIdFromUrl(u) {
+  try {
+    const p = new URL(u);
+    const host = p.hostname.replace(/^www\./, "").toLowerCase();
+    if (!host.includes("tiktok.com")) return null;
+    const m = p.pathname.match(/\/video\/(\d{6,})/);
+    if (m) return `tiktok:${m[1]}`;
+    const short = p.pathname.replace(/^\/+|\/+$/g, "");
+    if ((host === "vm.tiktok.com" || host === "vt.tiktok.com") && short) return `tiktok-short:${short}`;
+    return null;
+  } catch { return null; }
 }
 
 module.exports = {
@@ -143,6 +178,8 @@ module.exports = {
 
     function canonicalKey(u) {
       try {
+        const tk = tiktokIdFromUrl(u);
+        if (tk) return tk;
         const p = new URL(u);
         const host = p.hostname.replace(/^www\./, "").replace(/^m\./, "").toLowerCase();
         const pathname = p.pathname.replace(/\/+$/, "").toLowerCase();
@@ -163,26 +200,32 @@ module.exports = {
       const k = canonicalKey(u);
       if (seenKeys.has(k)) continue;
       seenKeys.add(k);
-      dedupedLinks.push(u);
+      dedupedLinks.push({ url: u, key: k });
     }
-    const links = dedupedLinks;
+    const links = dedupedLinks.filter(l => !wasLinkRecentlySent(threadID, l.key));
+    if (dedupedLinks.length > 0 && links.length === 0) {
+      console.log(`[autolink] all ${dedupedLinks.length} link(s) already sent recently in thread ${threadID}, skipping`);
+      return;
+    }
     if (links.length === 0) {
       console.log(`[autolink] no supported links among:`, cleaned);
       return;
     }
-    console.log(`[autolink] processing ${links.length} supported link(s):`, links);
+    console.log(`[autolink] processing ${links.length} supported link(s):`, links.map(l => l.url));
 
     const key = `${threadID}:${messageID}`;
     if (_processing.has(key) || _doneIDs.has(key)) return;
     _processing.add(key);
     markDone(key);
+    for (const l of links) markLinkSent(threadID, l.key);
 
     try { api.setMessageReaction("⏳", messageID, () => {}, true); } catch (_) {}
 
     let successCount = 0;
     let failCount = 0;
 
-    for (const url of links.slice(0, 3)) {
+    for (const linkObj of links.slice(0, 3)) {
+      const url = linkObj.url;
       const outBase = path.join(TMP_DIR, `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
       let downloaded = null;
       try {
