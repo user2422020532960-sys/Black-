@@ -1,5 +1,14 @@
 const fs = require("fs");
-const { downloadVideo } = require("sagor-video-downloader");
+const path = require("path");
+const { execFile } = require("child_process");
+let sagorDownloadVideo = null;
+try { sagorDownloadVideo = require("sagor-video-downloader").downloadVideo; } catch (_) {}
+
+const YTDLP = path.join(process.cwd(), "yt-dlp");
+const TMP_DIR = path.join(process.cwd(), "tmp_autolink");
+const MAX_MB = 80;
+
+if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
 
 const SUPPORTED_DOMAINS = [
   "youtube.com", "youtu.be", "m.youtube.com",
@@ -21,13 +30,55 @@ function isSupportedLink(url) {
   } catch { return false; }
 }
 
+function ytdlpDownload(url, outBase) {
+  return new Promise((resolve, reject) => {
+    const args = [
+      "--no-playlist", "--no-warnings",
+      "--socket-timeout", "20", "--retries", "3", "--fragment-retries", "3",
+      "--no-part", "--restrict-filenames",
+      "-f", "best[ext=mp4][height<=720]/best[ext=mp4]/bv*[height<=720]+ba/best",
+      "--merge-output-format", "mp4",
+      "--print", "after_move:%(title).80s",
+      "-o", outBase + ".%(ext)s",
+      url
+    ];
+    execFile(YTDLP, args, { timeout: 180000, maxBuffer: 20 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err) return reject(new Error(stderr?.slice(-200) || err.message));
+      const dir = path.dirname(outBase);
+      const base = path.basename(outBase);
+      try {
+        const found = fs.readdirSync(dir).find(f => f.startsWith(base + "."));
+        if (found) {
+          const title = (stdout || "").toString().trim().split("\n").pop() || "Video File";
+          return resolve({ filePath: path.join(dir, found), title });
+        }
+      } catch (_) {}
+      reject(new Error("file not found after download"));
+    });
+  });
+}
+
+async function trySagor(url) {
+  if (!sagorDownloadVideo) return null;
+  try {
+    const r = await sagorDownloadVideo(url);
+    if (!r || !r.filePath || !fs.existsSync(r.filePath)) return null;
+    const dest = path.join(TMP_DIR, `sagor_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.mp4`);
+    try { fs.renameSync(r.filePath, dest); } catch { fs.copyFileSync(r.filePath, dest); try { fs.unlinkSync(r.filePath); } catch (_) {} }
+    return { filePath: dest, title: r.title || "Video File" };
+  } catch (e) {
+    console.log(`[autolink] sagor failed for ${url}:`, e.message);
+    return null;
+  }
+}
+
 const _processing = new Set();
 
 module.exports = {
   config: {
     name: "رابط-تلقائي",
     aliases: ["autolink"],
-    version: "2.3",
+    version: "2.4",
     author: "Saint",
     countDown: 0,
     role: 0,
@@ -45,7 +96,6 @@ module.exports = {
     const body = event.body || "";
 
     const collected = new Set();
-
     const bodyMatches = body.match(/(https?:\/\/[^\s<>]+)/g);
     if (bodyMatches) bodyMatches.forEach(u => collected.add(u));
 
@@ -88,19 +138,29 @@ module.exports = {
     let failCount = 0;
 
     for (const url of links.slice(0, 3)) {
-      let filePath = null;
+      const outBase = path.join(TMP_DIR, `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+      let downloaded = null;
       try {
-        const result = await downloadVideo(url);
-        filePath = result?.filePath;
-        const title = result?.title;
+        downloaded = await trySagor(url);
 
-        if (!filePath || !fs.existsSync(filePath)) throw new Error("file not found");
+        if (!downloaded) {
+          try {
+            downloaded = await ytdlpDownload(url, outBase);
+          } catch (e) {
+            console.log(`[autolink] ytdlp failed for ${url}:`, e.message);
+          }
+        }
 
-        const stats = fs.statSync(filePath);
-        const fileSizeInMB = stats.size / (1024 * 1024);
+        if (!downloaded || !downloaded.filePath || !fs.existsSync(downloaded.filePath)) {
+          failCount++;
+          continue;
+        }
 
-        if (fileSizeInMB > 80) {
-          try { fs.unlinkSync(filePath); } catch (_) {}
+        const stats = fs.statSync(downloaded.filePath);
+        const sizeMB = stats.size / (1024 * 1024);
+
+        if (sizeMB > MAX_MB) {
+          try { fs.unlinkSync(downloaded.filePath); } catch (_) {}
           failCount++;
           continue;
         }
@@ -111,14 +171,14 @@ module.exports = {
               body:
 `📥 ᴠɪᴅᴇᴏ ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ
 ━━━━━━━━━━━━━━━
-🎬 ᴛɪᴛʟᴇ: ${title || "Video File"}
-📦 sɪᴢᴇ: ${fileSizeInMB.toFixed(2)} MB
+🎬 ᴛɪᴛʟᴇ: ${downloaded.title || "Video File"}
+📦 sɪᴢᴇ: ${sizeMB.toFixed(2)} MB
 ━━━━━━━━━━━━━━━`,
-              attachment: fs.createReadStream(filePath)
+              attachment: fs.createReadStream(downloaded.filePath)
             },
             threadID,
             () => {
-              try { fs.unlinkSync(filePath); } catch (_) {}
+              try { fs.unlinkSync(downloaded.filePath); } catch (_) {}
               res();
             },
             messageID
@@ -127,8 +187,8 @@ module.exports = {
 
         successCount++;
       } catch (e) {
-        console.log(`[autolink] failed for ${url}:`, e.message);
-        try { if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (_) {}
+        console.log(`[autolink] error for ${url}:`, e.message);
+        try { if (downloaded?.filePath && fs.existsSync(downloaded.filePath)) fs.unlinkSync(downloaded.filePath); } catch (_) {}
         failCount++;
       }
     }
