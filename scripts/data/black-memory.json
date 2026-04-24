@@ -83,7 +83,8 @@
       "gender": "unknown",
       "name": "X'inzo Il",
       "facts": [],
-      "people": {}
+      "people": {},
+      "decodedName": "X inzo Il"
     },
     "61583739652803": {
       "gender": "unknown",
@@ -131,6 +132,9 @@
       "people": {}
     },
     "948562437761686": {
+      "people": {}
+    },
+    "1873886006633843": {
       "people": {}
     }
   }
