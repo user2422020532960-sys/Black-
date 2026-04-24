@@ -624,18 +624,43 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
       });
     }
 
-    const resp = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: history.map(h => ({ role: h.role, parts: [{ text: h.content }] })),
-        generationConfig: { temperature: 0.9, maxOutputTokens: 300 }
-      },
-      { headers: { "Content-Type": "application/json" }, timeout: 20000 }
-    );
+    const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"];
+    let reply = null;
+    let lastErr = null;
 
-    const reply = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!reply) { message.reply("ما جاوبش."); return; }
+    for (const model of MODELS) {
+      try {
+        const resp = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: history.map(h => ({ role: h.role === "model" ? "model" : "user", parts: [{ text: h.content }] })),
+            generationConfig: { temperature: 0.9, maxOutputTokens: 300 }
+          },
+          { headers: { "Content-Type": "application/json" }, timeout: 25000 }
+        );
+        const text = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) { reply = text; break; }
+        const finishReason = resp.data?.candidates?.[0]?.finishReason;
+        const promptFeedback = resp.data?.promptFeedback?.blockReason;
+        lastErr = new Error(`empty response (finish: ${finishReason || "?"}, block: ${promptFeedback || "none"})`);
+      } catch (e) {
+        const status = e.response?.status;
+        const errMsg = e.response?.data?.error?.message || e.message;
+        lastErr = new Error(`[${model}] ${status || ""} ${errMsg}`);
+        if (status === 400 || status === 401 || status === 403) break;
+        if (status === 404) continue;
+      }
+    }
+
+    if (!reply) {
+      console.log("[بلاك] AI failed:", lastErr?.message);
+      const adminIDs = global.BlackBot?.config?.adminBot || [];
+      const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
+      const errInfo = isAdmin && lastErr ? `\n[للمشرف: ${lastErr.message.slice(0, 200)}]` : "";
+      try { message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى." + errInfo); } catch (_) {}
+      return;
+    }
 
     history.push({ role: "model", content: reply });
 
@@ -650,6 +675,7 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
       } catch (_) {}
     });
   } catch (e) {
+    console.log("[بلاك] handler error:", e.message);
     try { message.reply("صراح ما قدرتش نجاوب دابا، حاول مرة أخرى."); } catch (_) {}
   } finally {
     processingUsers.delete(senderID);
