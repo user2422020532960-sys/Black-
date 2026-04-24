@@ -617,9 +617,7 @@ function stripUserEcho(reply, userMsg) {
 function formatStyledReply(text) {
   const body = (text || "").trim();
   if (!body) return body;
-  const header = "◈  ⌯ ⟅𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ 𖥻 ❦៹ .˖ִ.◈";
-  const footer = "╭──────\n        ⌯ 𝕭⃟𝗹⃪𝗮⃪𝗰⃪𝐤̰   \n──────╯ ↞ 𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ ⪼";
-  return `${header}\n\n${body}\n\n${footer}`;
+  return `${body}\n↞ 𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ⪼`;
 }
 
 async function handleAIMessage({ api, event, userMsg, message, commandName, senderID, threadID }) {
