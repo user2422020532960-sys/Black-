@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const { execFile } = require("child_process");
+let sagorDownloadVideo = null;
+try { sagorDownloadVideo = require("sagor-video-downloader").downloadVideo; } catch (_) {}
 
 const YTDLP = path.join(process.cwd(), "yt-dlp");
 const TMP_DIR = path.join(process.cwd(), "tmp_autolink");
@@ -150,18 +152,30 @@ module.exports = {
     for (const url of links.slice(0, 2)) {
       const outBase = path.join(TMP_DIR, `${Date.now()}_${senderID}_${Math.random().toString(36).slice(2, 7)}`);
       let filePath = null;
+      let title = "فيديو";
+      let duration = 0;
       try {
-        let info = null;
-        try { info = await ytdlpGetInfo(url); } catch (_) {}
-
-        const title = (info?.title || "فيديو").toString().slice(0, 80);
-        const duration = Number(info?.duration || 0);
-
-        if (duration && duration > MAX_DURATION) {
-          continue;
+        if (sagorDownloadVideo) {
+          try {
+            const r = await sagorDownloadVideo(url);
+            if (r && r.filePath && fs.existsSync(r.filePath)) {
+              filePath = r.filePath;
+              if (r.title) title = String(r.title).slice(0, 80);
+            }
+          } catch (e) {
+            console.log(`[autolink] sagor failed for ${url}:`, e.message);
+          }
         }
 
-        filePath = await ytdlpDownload(url, outBase);
+        if (!filePath) {
+          let info = null;
+          try { info = await ytdlpGetInfo(url); } catch (_) {}
+          title = (info?.title || title).toString().slice(0, 80);
+          duration = Number(info?.duration || 0);
+          if (duration && duration > MAX_DURATION) continue;
+          filePath = await ytdlpDownload(url, outBase);
+        }
+
         const stats = fs.statSync(filePath);
         const sizeMB = stats.size / (1024 * 1024);
 
