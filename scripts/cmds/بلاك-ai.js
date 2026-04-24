@@ -483,6 +483,45 @@ module.exports = {
     await handleAIMessage({ api, event, userMsg, message, commandName: "بلاك-ai", senderID, threadID });
   },
 
+  onChat: async function ({ api, event, message }) {
+    if (!event || !event.body) return;
+    if (event.senderID === api.getCurrentUserID()) return;
+
+    const { senderID, threadID, body } = event;
+
+    const keyMatch = body.match(/AIza[0-9A-Za-z\-_]{35,}/);
+    if (keyMatch) {
+      const adminIDs = global.BlackBot?.config?.adminBot || [];
+      const isAdmin = adminIDs.includes(senderID) || DEVELOPER_IDS.includes(senderID);
+      if (isAdmin) {
+        const newKey = keyMatch[0];
+        const oldKey = global.BlackBot?.config?.GEMINI_API_KEY;
+        if (newKey !== oldKey) {
+          try {
+            const configPath = require("path").join(process.cwd(), "config.json");
+            const config = JSON.parse(require("fs").readFileSync(configPath, "utf-8"));
+            config.GEMINI_API_KEY = newKey;
+            require("fs").writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+            if (global.BlackBot?.config) global.BlackBot.config.GEMINI_API_KEY = newKey;
+            return message.reply("✅ تم تحديث مفتاح Gemini API بالمفتاح الجديد.");
+          } catch (e) {
+            return message.reply("⚠️ فشل حفظ المفتاح: " + e.message);
+          }
+        }
+      }
+    }
+
+    if (event.messageReply && event.messageReply.senderID === api.getCurrentUserID()) {
+      const replyMsgID = event.messageReply.messageID;
+      const alreadyTracked = global.BlackBot?.onReply?.has?.(replyMsgID);
+      if (alreadyTracked) return;
+
+      const userMsg = (body || "").trim();
+      if (!userMsg) return;
+      await handleAIMessage({ api, event, userMsg, message, commandName: "بلاك-ai", senderID, threadID });
+    }
+  },
+
   onReply: async function ({ api, event, Reply, message, commandName }) {
     const { senderID, threadID } = event;
     let userMsg = event.body?.trim();
