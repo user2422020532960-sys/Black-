@@ -553,16 +553,21 @@ function getProfile(senderID) {
 function buildUserContext(senderID, threadID) {
   const profile = getProfile(senderID);
   const lines = [];
+  const fbName = userNames.get(senderID) || null;
+
+  const umem = getUserMem(senderID);
+  const decodedName = umem.decodedName || (fbName ? cleanNameZakhraf(fbName) : null);
+  const nameDisplay = decodedName && decodedName !== fbName ? `${fbName} → الاسم الحقيقي: ${decodedName}` : fbName;
 
   if (profile.role === 'developer') {
     const isSaim = senderID === DEVELOPER_IDS[1];
-    lines.push(`[ المُرسل: ${isSaim ? "سايم — مطوّرك الحقيقي" : "مطوّرك"} ]`);
+    lines.push(`[ المُرسل: ${isSaim ? "سايم — مطوّرك الحقيقي" : "مطوّرك"}${nameDisplay ? ` (${nameDisplay})` : ""} ]`);
   } else if (profile.role === 'admin') {
-    lines.push(`[ المُرسل: مشرف ]`);
+    lines.push(`[ المُرسل: مشرف${nameDisplay ? ` (${nameDisplay})` : ""} ]`);
   } else {
-    lines.push(`[ المُرسل: مستخدم عادي ]`);
+    lines.push(`[ المُرسل: مستخدم عادي${nameDisplay ? ` (${nameDisplay})` : ""} ]`);
   }
-  lines.push(`[ تنبيه صارم: لا تكتب اسم المُرسل ولا تناديه باسمه أبداً في ردك. خاطبه مباشرة بـ "أنت/راك/نتا" بلا اسم. ]`);
+  lines.push(`[ ⚠️ تنبيه استعمال الاسم: تعرف اسم المُرسل للسياق فقط (تستعمله إذا سُئلت "وش اسمي؟" أو في حالات خاصة جداً)، لكن ممنوع تناديه باسمه في ردك العادي. خاطبه دائماً بـ "أنت/راك/نتا/كيراك" بلا ذكر اسمه. ]`);
 
   if (profile.gender && profile.gender !== "unknown") {
     lines.push(`[ الجنس: ${profile.gender === "female" ? "أنثى" : "ذكر"} ]`);
