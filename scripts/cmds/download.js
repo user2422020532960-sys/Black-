@@ -34,7 +34,20 @@ module.exports = {
 
     const ext = path.extname(url.split("?")[0]).toLowerCase();
 
+    const VIDEO_PLATFORMS = [
+      "youtube.com", "youtu.be", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com",
+      "facebook.com", "fb.com", "fb.watch", "instagram.com", "twitter.com",
+      "x.com", "reddit.com", "v.redd.it", "twitch.tv", "dailymotion.com",
+      "vimeo.com", "streamable.com", "snapchat.com", "pinterest.com"
+    ];
+    let isPlatformUrl = false;
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, "").replace(/^m\./, "");
+      isPlatformUrl = VIDEO_PLATFORMS.some(d => host === d || host.endsWith("." + d));
+    } catch (_) {}
+
     if (!supported.includes(ext)) {
+      if (isPlatformUrl) return;
       return api.sendMessage(
         "❌ Uɴsᴜᴘᴘᴏʀᴛᴇᴅ ғɪʟᴇ ᴛʏᴘᴇ!\n\nSᴜᴘᴘᴏʀᴛᴇᴅ:\nmp4, mp3, jpg, png, gif, pdf, docx, txt, zip",
         event.threadID,

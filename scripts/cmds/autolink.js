@@ -73,6 +73,14 @@ async function trySagor(url) {
 }
 
 const _processing = new Set();
+const _doneIDs = new Map();
+function markDone(key) {
+  _doneIDs.set(key, Date.now());
+  if (_doneIDs.size > 500) {
+    const cutoff = Date.now() - 30 * 60 * 1000;
+    for (const [k, t] of _doneIDs) if (t < cutoff) _doneIDs.delete(k);
+  }
+}
 
 module.exports = {
   config: {
@@ -113,6 +121,7 @@ module.exports = {
     }
 
     if (collected.size === 0) return;
+    console.log(`[autolink] ${collected.size} URL(s) found in msg ${messageID}:`, [...collected]);
 
     const cleaned = [...collected].map(u => {
       try {
@@ -126,11 +135,16 @@ module.exports = {
     });
 
     const links = [...new Set(cleaned)].filter(isSupportedLink);
-    if (links.length === 0) return;
+    if (links.length === 0) {
+      console.log(`[autolink] no supported links among:`, cleaned);
+      return;
+    }
+    console.log(`[autolink] processing ${links.length} supported link(s):`, links);
 
     const key = `${threadID}:${messageID}`;
-    if (_processing.has(key)) return;
+    if (_processing.has(key) || _doneIDs.has(key)) return;
     _processing.add(key);
+    markDone(key);
 
     try { api.setMessageReaction("⏳", messageID, () => {}, true); } catch (_) {}
 
