@@ -1,5 +1,47 @@
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 const log = require("./logger/log.js");
+
+const LOCK_FILE = path.join(__dirname, ".bot.lock");
+function acquireSingletonLock() {
+  try {
+    if (fs.existsSync(LOCK_FILE)) {
+      const oldPid = parseInt(fs.readFileSync(LOCK_FILE, "utf-8").trim(), 10);
+      if (oldPid && oldPid !== process.pid) {
+        let alive = false;
+        try { process.kill(oldPid, 0); alive = true; } catch (_) {}
+        if (alive) {
+          console.log(`[lock] another bot instance is running (pid ${oldPid}). Killing it before starting...`);
+          try { process.kill(oldPid, "SIGKILL"); } catch (_) {}
+          try {
+            const childPids = execSync(`pgrep -P ${oldPid}`, { encoding: "utf-8" }).trim().split(/\s+/).filter(Boolean);
+            for (const cpid of childPids) { try { process.kill(parseInt(cpid, 10), "SIGKILL"); } catch (_) {} }
+          } catch (_) {}
+          const start = Date.now();
+          while (Date.now() - start < 5000) {
+            try { process.kill(oldPid, 0); } catch { break; }
+          }
+        }
+      }
+    }
+    fs.writeFileSync(LOCK_FILE, String(process.pid));
+  } catch (e) {
+    console.log("[lock] failed to acquire singleton lock:", e.message);
+  }
+}
+function releaseLock() {
+  try {
+    if (fs.existsSync(LOCK_FILE)) {
+      const pid = parseInt(fs.readFileSync(LOCK_FILE, "utf-8").trim(), 10);
+      if (pid === process.pid) fs.unlinkSync(LOCK_FILE);
+    }
+  } catch (_) {}
+}
+acquireSingletonLock();
+process.on("exit", releaseLock);
+process.on("SIGINT", () => { releaseLock(); process.exit(0); });
+process.on("SIGTERM", () => { releaseLock(); process.exit(0); });
 
 let restartCount = 0;
 let lastRestartTime = 0;
