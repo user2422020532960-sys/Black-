@@ -172,5 +172,6 @@
     "selfListen": false,
     "selfListenEvent": true,
     "autoReconnect": true
-  }
+  },
+  "GEMINI_API_KEY": "AIzaSyCbvhwHOvGqmMTiQRj8wWKv0yO4y2qZeDE"
 }
