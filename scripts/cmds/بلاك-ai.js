@@ -624,7 +624,14 @@ async function handleAIMessage({ api, event, userMsg, message, commandName, send
       });
     }
 
-    const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-pro"];
+    const MODELS = [
+      "gemini-flash-latest",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-001",
+      "gemini-2.5-flash-lite",
+      "gemini-pro-latest"
+    ];
     let reply = null;
     let lastErr = null;
 
