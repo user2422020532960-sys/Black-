@@ -145,21 +145,52 @@ module.exports = {
     if (body.trim().startsWith(prefix)) return;
     if (body.trim().startsWith("بلاك")) return;
 
-    const collected = new Set();
-    const bodyMatches = body.match(/(https?:\/\/[^\s<>]+)/g);
-    if (bodyMatches) bodyMatches.forEach(u => collected.add(u));
+    function pickFirstUrl(strs) {
+      for (const c of strs) {
+        if (typeof c !== "string") continue;
+        const m = c.match(/(https?:\/\/[^\s<>"']+)/);
+        if (m) return m[1];
+      }
+      return null;
+    }
 
+    function isFbVideoUrl(u) {
+      try {
+        const p = new URL(u);
+        const host = p.hostname.replace(/^www\./, "").replace(/^m\./, "").toLowerCase();
+        if (!/(^|\.)facebook\.com$|^fb\.watch$|^fb\.com$/.test(host)) return false;
+        return /\/(share\/v|share\/r|reel|watch|videos?)\//i.test(p.pathname) || host === "fb.watch";
+      } catch { return false; }
+    }
+
+    const attachmentUrls = [];
+    let firstFbVideoTaken = false;
     if (Array.isArray(event.attachments)) {
       for (const att of event.attachments) {
-        const candidates = [
-          att?.url, att?.facebookUrl, att?.source,
-          att?.target?.url, att?.title, att?.description
-        ].filter(v => typeof v === "string");
-        for (const c of candidates) {
-          const m = c.match(/(https?:\/\/[^\s<>"']+)/g);
-          if (m) m.forEach(u => collected.add(u));
+        const one = pickFirstUrl([
+          att?.url,
+          att?.facebookUrl,
+          att?.target?.url,
+          att?.source,
+          att?.title,
+          att?.description,
+        ]);
+        if (!one) continue;
+        if (isFbVideoUrl(one)) {
+          if (firstFbVideoTaken) continue;
+          firstFbVideoTaken = true;
         }
+        attachmentUrls.push(one);
       }
+    }
+
+    const bodyUrls = (body.match(/(https?:\/\/[^\s<>]+)/g) || []);
+    const hasFbAttachment = attachmentUrls.some(isFbVideoUrl);
+
+    const collected = new Set(attachmentUrls);
+    for (const u of bodyUrls) {
+      if (hasFbAttachment && isFbVideoUrl(u)) continue;
+      collected.add(u);
     }
 
     if (collected.size === 0) return;
