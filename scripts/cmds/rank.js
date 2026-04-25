@@ -21,7 +21,7 @@ global.client.makeRankCard = makeRankCard;
 module.exports = {
         config: {
                 name: "رانك",
-                aliases: ["ترتيب", "rank"],
+                aliases: ["لفل", "rank"],
                 version: "1.7",
                 author: "Saint",
                 countDown: 5,
