@@ -530,6 +530,23 @@ module.exports = {
 
       const userMsg = (body || "").trim();
       if (!userMsg) return;
+
+      try {
+        const prefix = global.BlackBot?.config?.prefix || ".";
+        const threadPrefix = (global.BlackBot?.threads?.get?.(threadID)?.data?.prefix) || prefix;
+        const usedPrefix = userMsg.startsWith(threadPrefix) ? threadPrefix
+          : userMsg.startsWith(prefix) ? prefix : null;
+        if (usedPrefix) {
+          const firstWord = userMsg.slice(usedPrefix.length).trim().split(/\s+/)[0]?.toLowerCase();
+          if (firstWord) {
+            const cmds = global.BlackBot?.commands;
+            const aliases = global.BlackBot?.aliases;
+            const isCommand = cmds?.has?.(firstWord) || (aliases?.has?.(firstWord) && cmds?.has?.(aliases.get(firstWord)));
+            if (isCommand) return;
+          }
+        }
+      } catch (_) {}
+
       await handleAIMessage({ api, event, userMsg, message, commandName: "بلاك-ai", senderID, threadID });
     }
   },
