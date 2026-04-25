@@ -116,24 +116,26 @@ module.exports = {
         let check = false;
 
         if (isNaN(num)) {
-            msg = "⚠️ رد على الرسالة برقم العنوان";
+            msg = "◈ رد بالرقم";
         } else if (num > data.length || num <= 0) {
-            msg = "❌ الرقم الذي اخترته غير موجود بالقائمة";
+            msg = "◈ رقم غير موجود";
         } else {
             const dataAfter = data[num - 1];
 
             if (Reply.type === "cmd_info") {
                 const cmd = commands.get(dataAfter);
-                if (!cmd) return message.reply("❌ الأمر غير موجود");
+                if (!cmd) return message.reply("◈ الأمر غير موجود");
                 const cfg = cmd.config;
-                msg += `〖 ${(getCmdCategory(cmd)).toUpperCase()} 〗\n`;
-                msg += `\n📌 اسم الأمر: ${dataAfter}`;
-                msg += `\n📝 الوصف: ${getCmdDescription(cmd)}`;
-                msg += `\n⚙️ الاستخدام: ${getCmdUsage(cmd, prefix)}`;
-                msg += `\n⏱️ وقت الانتظار: ${cfg.coolDown || cfg.cooldowns || 5}s`;
-                msg += `\n🔑 الصلاحية: ${getRoleText(cfg.role || cfg.hasPermssion)}`;
-                msg += `\n✎﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏`;
-                msg += `\n\n↞ تم تطويره بواسطة ⸙ 𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ ⪼`;
+                msg = `◈  ⌯ ⟅𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ 𖥻 ❦៹ .˖ִ.◈\n`;
+                msg += `   〖 ✦ شرح الأمر ✦ 〗\n`;
+                msg += `━━━━━━━━━━\n`;
+                msg += ` ◈ الأمر: ${dataAfter}\n`;
+                msg += ` ◈ الفئة: ${getCmdCategory(cmd)}\n`;
+                msg += ` ◈ الوصف: ${getCmdDescription(cmd)}\n`;
+                msg += ` ◈ الاستخدام: ${getCmdUsage(cmd, prefix)}\n`;
+                msg += ` ◈ الانتظار: ${cfg.coolDown || cfg.cooldowns || 5}s\n`;
+                msg += ` ◈ الصلاحية: ${getRoleText(cfg.role || cfg.hasPermssion)}\n`;
+                msg += `━━━━━━━━━━`;
             } else {
                 check = true;
                 let count = 0;
@@ -204,10 +206,10 @@ module.exports = {
             if (args[1]) {
                 page_num_input = parseInt(args[1]);
                 if (isNaN(page_num_input)) {
-                    msg = "⚠️ اكتب رقم الصفحة بعد الكل";
+                    msg = "◈ اكتب رقم الصفحة";
                     check = false;
                 } else if (page_num_input > page_num_total || page_num_input <= 0) {
-                    msg = "❌ رقم الصفحة غير موجود";
+                    msg = "◈ صفحة غير موجودة";
                     check = false;
                 }
             }
@@ -249,15 +251,17 @@ module.exports = {
                 || [...commands.values()].find(c => c.config.aliases?.includes(cmdName));
             if (cmd) {
                 const cfg = cmd.config;
-                let infoMsg = `〖 ${getCmdCategory(cmd).toUpperCase()} 〗\n`;
-                infoMsg += `\n📌 اسم الأمر: ${cfg.name}`;
-                infoMsg += `\n🔀 الاختصارات: ${cfg.aliases?.join(", ") || "لا يوجد"}`;
-                infoMsg += `\n📝 الوصف: ${getCmdDescription(cmd)}`;
-                infoMsg += `\n⚙️ الاستخدام: ${getCmdUsage(cmd, prefix)}`;
-                infoMsg += `\n⏱️ وقت الانتظار: ${cfg.coolDown || cfg.cooldowns || 5}s`;
-                infoMsg += `\n🔑 الصلاحية: ${getRoleText(cfg.role || cfg.hasPermssion)}`;
-                infoMsg += `\n✎﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏﹏`;
-                infoMsg += `\n\n↞ 𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ ⪼`;
+                let infoMsg = `◈  ⌯ ⟅𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ 𖥻 ❦៹ .˖ִ.◈\n`;
+                infoMsg += `   〖 ✦ شرح الأمر ✦ 〗\n`;
+                infoMsg += `━━━━━━━━━━\n`;
+                infoMsg += ` ◈ الأمر: ${cfg.name}\n`;
+                infoMsg += ` ◈ الفئة: ${getCmdCategory(cmd)}\n`;
+                infoMsg += ` ◈ الاختصارات: ${cfg.aliases?.join(", ") || "—"}\n`;
+                infoMsg += ` ◈ الوصف: ${getCmdDescription(cmd)}\n`;
+                infoMsg += ` ◈ الاستخدام: ${getCmdUsage(cmd, prefix)}\n`;
+                infoMsg += ` ◈ الانتظار: ${cfg.coolDown || cfg.cooldowns || 5}s\n`;
+                infoMsg += ` ◈ الصلاحية: ${getRoleText(cfg.role || cfg.hasPermssion)}\n`;
+                infoMsg += `━━━━━━━━━━`;
                 return message.reply(infoMsg);
             }
         }
@@ -270,10 +274,10 @@ module.exports = {
         if (args[0] && !["all", "الكل"].includes(args[0].trim())) {
             page_num_input = parseInt(args[0]);
             if (isNaN(page_num_input)) {
-                msg = "⚠️ رد على الرسالة برقم العنوان";
+                msg = "◈ رد بالرقم";
                 check = false;
             } else if (page_num_input > page_num_total || page_num_input <= 0) {
-                msg = "❌ الرقم الذي اخترته غير موجود بالقائمة";
+                msg = "◈ رقم غير موجود";
                 check = false;
             }
         }
