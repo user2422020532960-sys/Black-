@@ -14,8 +14,8 @@ BlackBot V2 is a feature-rich Facebook Messenger bot built on Node.js using the 
 - **Real-time:** Socket.io
 
 ## Entry Points
-- `index.js` — Starts uptime server (port 3000) and launches `Goat.js` as a child process
-- `Goat.js` — Main bot logic: loads config, initializes DB, triggers login
+- `index.js` — Starts uptime server (port 3000) and launches `Black.js` as a child process
+- `Black.js` — Main bot logic: loads config, initializes DB, triggers login
 - `bot/login/login.js` — Facebook login handler (cookies/token/email+password)
 
 ## Key Files
@@ -29,7 +29,7 @@ BlackBot V2 is a feature-rich Facebook Messenger bot built on Node.js using the 
 ## Directory Structure
 ```
 ├── index.js              - Entry point
-├── Goat.js               - Core bot logic
+├── Black.js              - Core bot logic
 ├── config.json           - Bot configuration (SECRET)
 ├── config.example.json   - Config template
 ├── account.txt           - Facebook cookies (SECRET)

@@ -1,9 +1,9 @@
 # index.js
-Goat.newVersionDetected=أنت تستخدم الإصدار %1، أحدث إصدار هو %2. يرجى التحديث لاستخدام البوت بشكل أفضل عن طريق كتابة الأمر التالي في الكونسول: %3
-Goat.autoRestart1=سيتم إعادة تشغيل البوت تلقائياً خلال %1
-Goat.autoRestart2=سيتم إعادة تشغيل البوت تلقائياً بواسطة cron job: %1
-Goat.googleApiTokenExpired=انتهت صلاحية Google API refresh token أو تم إلغاؤه، يرجى الحصول على توكن جديد من https://developers.google.com/oauthplayground/
-Goat.googleApiRefreshTokenExpired=انتهت صلاحية Google API refresh token أو تم إلغاؤه، يرجى الحصول على توكن جديد من https://developers.google.com/oauthplayground/
+Black.newVersionDetected=أنت تستخدم الإصدار %1، أحدث إصدار هو %2. يرجى التحديث لاستخدام البوت بشكل أفضل عن طريق كتابة الأمر التالي في الكونسول: %3
+Black.autoRestart1=سيتم إعادة تشغيل البوت تلقائياً خلال %1
+Black.autoRestart2=سيتم إعادة تشغيل البوت تلقائياً بواسطة cron job: %1
+Black.googleApiTokenExpired=انتهت صلاحية Google API refresh token أو تم إلغاؤه، يرجى الحصول على توكن جديد من https://developers.google.com/oauthplayground/
+Black.googleApiRefreshTokenExpired=انتهت صلاحية Google API refresh token أو تم إلغاؤه، يرجى الحصول على توكن جديد من https://developers.google.com/oauthplayground/
 
 # bot/login/login.js
 login.currentlyLogged=جاري تسجيل الدخول

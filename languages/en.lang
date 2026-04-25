@@ -1,8 +1,8 @@
 # index.js
-Goat.newVersionDetected=You are using version %1, the latest version is %2. Please update to use the bot better by typing into the console/cmd command: %3
-Goat.autoRestart1=Bot will auto restart in %1
-Goat.autoRestart2=Bot will auto restart by cron job: %1
-Goat.googleApiTokenExpired=Google API refresh token has expired or been revoked, please get a new token at https://developers.google.com/oauthplayground/
+Black.newVersionDetected=You are using version %1, the latest version is %2. Please update to use the bot better by typing into the console/cmd command: %3
+Black.autoRestart1=Bot will auto restart in %1
+Black.autoRestart2=Bot will auto restart by cron job: %1
+Black.googleApiTokenExpired=Google API refresh token has expired or been revoked, please get a new token at https://developers.google.com/oauthplayground/
 
 # bot/login/login.js
 login.currentlyLogged=Login in progress
@@ -40,15 +40,15 @@ login.changeGbanData=DATA HAS BEEN CHANGED, IT IS CURRENTLY IMPOSSIBLE TO LAUNCH
 login.errorNoti=An error occurred when retrieving the message
 login.refreshFbstateSuccess=Refreshed %1 file
 login.refreshFbstateError=An error occurred when refreshing the %1 file
-login.youAreBanned=You have been banned from the Goat-Bot project
+login.youAreBanned=You have been banned from the Black-Bot project
 login.runBot=Launch bot successfully, start receiving messages from users
 login.notLoggedIn=An error occurred, please check your Facebook account again
 login.callBackError=An error occurred when callback listenMqtt
 login.userBanned=You've been banned from using a bot!!
 login.checkGbanError=An error occurred while checking GBAN, try update source to latest version (open cmd and type: node update)
-login.gbanMessage=You have been banned from the Goat-Bot project on %1 for the reason: %2\n» Time: %3
-login.gbanMessageToDate=You have been banned from the Goat-Bot project on %1 for the reason: %2\n» Time: %3\n» To date: %4
-login.gbanAdminMessage=User %1 has been banned from the Goat-Bot project on %2 for the reason: %3
+login.gbanMessage=You have been banned from the Black-Bot project on %1 for the reason: %2\n» Time: %3
+login.gbanMessageToDate=You have been banned from the Black-Bot project on %1 for the reason: %2\n» Time: %3\n» To date: %4
+login.gbanAdminMessage=User %1 has been banned from the Black-Bot project on %2 for the reason: %3
 login.openServerUptimeSuccess=🚀 Opened uptime server: %1
 login.openServerUptimeError=An error has occurred, cannot open server uptime
 login.restartListenMessage=ListenMQTT restart enabled every %1
@@ -61,7 +61,7 @@ login.listenMqttCloseByUser=ListenMQTT closed by user
 login.retryCheckLiveCookie=Retrying to check cookie... %1
 login.startBotSuccess=Bot has been started successfully, start receiving messages from users
 
-version.tooOldVersion=You are using a too old version of Goat-Bot, please update to the latest version by typing the command: %1 into the cmd/console/terminal/shell
+version.tooOldVersion=You are using a too old version of Black-Bot, please update to the latest version by typing the command: %1 into the cmd/console/terminal/shell
 
 # bot/custom.js
 custom.refreshedFb_dtsg=Refreshed fb_dtsg and jazoest successfully

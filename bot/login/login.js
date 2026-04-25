@@ -612,7 +612,7 @@ async function startBot(_0x3cad9e) {
       log.info("BOT ID", global.botID + " - " + (await getName(global.botID)));
       log.info("PREFIX", global.BlackBot.config.prefix);
       log.info("LANGUAGE", global.BlackBot.config.language);
-      log.info("BOT NICK NAME", global.BlackBot.config.nickNameBot || "GOAT BOT");
+      log.info("BOT NICK NAME", global.BlackBot.config.nickNameBot || "BLACK BOT");
       let _0xe3d6c8 = {};
       // ✅ FIX 1: GBAN check fail হলে process.exit() করবে না, বট চালু থাকবে
       try {

@@ -122,7 +122,7 @@ node index.js
 ```
 BlackBot-V2/
 ├── 📄 index.js              - نقطة الدخول الرئيسية
-├── 📄 Goat.js               - الكود الأساسي للبوت
+├── 📄 Black.js              - الكود الأساسي للبوت
 ├── 📄 config.json           - إعدادات البوت (لا تشاركه!)
 ├── 📄 config.example.json   - مثال على الإعدادات
 ├── 📄 account.txt           - كوكيز فيسبوك (لا تشاركه!)

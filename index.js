@@ -23,7 +23,7 @@ function getRestartDelay() {
 
 function startProject() {
         lastRestartTime = Date.now();
-        const child = spawn("node", ["--max-old-space-size=512", "--expose-gc", "Goat.js"], {
+        const child = spawn("node", ["--max-old-space-size=512", "--expose-gc", "Black.js"], {
                 cwd: __dirname,
                 stdio: "inherit",
                 shell: false,
