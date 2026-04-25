@@ -67,13 +67,28 @@ module.exports = {
                 if (commandName === "ترتيب" || !sub || sub === "list" || sub === "-l" || sub === "قائمة") {
                         const ids = (config.adminBot || []).map(String);
                         let body;
+                        let names = [];
                         if (ids.length === 0) {
                                 body = "   ◆ لا يوجد مشرفون";
                         } else {
-                                const names = await Promise.all(ids.map(uid => resolveName(uid, api, usersData)));
+                                names = await Promise.all(ids.map(uid => resolveName(uid, api, usersData)));
                                 body = names.map((name, i) => ` 「${i + 1}」↞〔${name}〕\n         ◈ ${ids[i]}`).join("\n");
+                                body += `\n${LINE}\n   〖 الخيارات 〗\n${LINE}\n`;
+                                body += ` ◈ [رقم] ازالة ↞ إنزال من المشرفين\n`;
+                                body += ` ◈ [رقم] بان   ↞ إنزال + حظر عام`;
                         }
-                        return message.reply(box(`قائمة المشرفين [${ids.length}]`, body));
+                        return message.reply(box(`قائمة المشرفين [${ids.length}]`, body), (err, info) => {
+                                if (err || !info || ids.length === 0) return;
+                                global.BlackBot.onReply.set(info.messageID, {
+                                        commandName,
+                                        messageID: info.messageID,
+                                        author: event.senderID,
+                                        ids,
+                                        names,
+                                        delete: () => global.BlackBot.onReply.delete(info.messageID)
+                                });
+                                setTimeout(() => global.BlackBot.onReply.delete(info.messageID), 120000);
+                        });
                 }
 
                 switch (sub) {
@@ -150,5 +165,53 @@ module.exports = {
                         default:
                                 return message.reply(box("شرح الأمر", ` ◈ مشرف        ↞ عرض المشرفين\n ◈ مشرف -a [id] ↞ ترقية\n ◈ مشرف -r [id] ↞ إنزال\n ◈ ترتيب        ↞ عرض المشرفين`));
                 }
+        },
+
+        onReply: async function ({ api, event, Reply, usersData, getTime }) {
+                if (event.senderID !== Reply.author) return;
+                const body = (event.body || "").trim();
+                const match = body.match(/^(\d+)\s+(.+)$/);
+                if (!match) return api.sendMessage("〔!〕 الصيغة: <رقم> ازالة | <رقم> بان", event.threadID, event.messageID);
+
+                const idx = parseInt(match[1]) - 1;
+                const action = match[2].trim();
+                const { ids, names } = Reply;
+
+                if (idx < 0 || idx >= ids.length)
+                        return api.sendMessage("〔✗〕 رقم غير صالح", event.threadID, event.messageID);
+
+                const uid = ids[idx];
+                const name = names[idx] || uid;
+
+                // ── ازالة ──
+                if (action === "ازالة" || action === "إزالة" || action === "حذف") {
+                        const i = config.adminBot.indexOf(uid);
+                        if (i === -1) return api.sendMessage("〔✗〕 ليس مشرفاً", event.threadID, event.messageID);
+                        config.adminBot.splice(i, 1);
+                        writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+                        Reply.delete();
+                        return api.sendMessage(box("إنزال مشرف", ` 「-」↞〔${name}〕\n         ◈ ${uid}`), event.threadID);
+                }
+
+                // ── بان ──
+                if (action === "بان" || action === "حظر" || action === "ban") {
+                        const i = config.adminBot.indexOf(uid);
+                        if (i !== -1) {
+                                config.adminBot.splice(i, 1);
+                                writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+                        }
+                        try {
+                                const time = (typeof getTime === "function") ? getTime("DD/MM/YYYY HH:mm:ss") : new Date().toISOString();
+                                await usersData.set(uid, {
+                                        banned: { status: true, reason: "حظر من قائمة الترتيب", date: time }
+                                });
+                        } catch (e) {
+                                return api.sendMessage(box("خطأ", ` ◈ فشل الحظر ↞ ${e.message}`), event.threadID);
+                        }
+                        Reply.delete();
+                        return api.sendMessage(box("حظر عام", ` 「⛔」↞〔${name}〕\n         ◈ ${uid}\n   ◆ تم إنزاله من المشرفين وحظره من البوت`), event.threadID);
+                }
+
+                return api.sendMessage("〔!〕 الإجراء غير معروف. استخدم: ازالة | بان", event.threadID, event.messageID);
         }
 };
