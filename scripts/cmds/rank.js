@@ -21,7 +21,7 @@ global.client.makeRankCard = makeRankCard;
 module.exports = {
         config: {
                 name: "رانك",
-aliases: ["رانك", "ترتيب", "rank"],
+                aliases: ["ترتيب", "rank"],
                 version: "1.7",
                 author: "Saint",
                 countDown: 5,
@@ -41,7 +41,7 @@ aliases: ["رانك", "ترتيب", "rank"],
         },
 
         onStart: async function ({ message, event, usersData, threadsData, commandName, envCommands, api }) {
-                deltaNext = envCommands[commandName].deltaNext;
+                deltaNext = (envCommands[commandName] || envCommands["rank"] || { deltaNext: 5 }).deltaNext;
                 let targetUsers;
                 const arrayMentions = Object.keys(event.mentions);
 
