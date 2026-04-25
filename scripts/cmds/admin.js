@@ -3,9 +3,38 @@ const { writeFileSync } = require("fs-extra");
 
 const HEADER = "◈  ⌯ ⟅𝗕⃪𝗹⃪𝖆⃟𝗰⃪𝗸⃪ ˖՞𝗦⃪𝖆⃟𝗶⃪𝗻⃪𝘁⃪ 𖥻 ❦៹ .˖ִ.◈";
 const LINE = "━━━━━━━━━━";
+const UNKNOWN = "حساب غير معروف";
 
 function box(title, body) {
         return `${HEADER}\n   〖 ✦ ${title} ✦ 〗\n${LINE}\n${body}\n${LINE}`;
+}
+
+function clean(name) {
+        if (name === undefined || name === null) return null;
+        const s = String(name).trim();
+        if (!s || s.toLowerCase() === "null" || s.toLowerCase() === "undefined") return null;
+        return s;
+}
+
+async function resolveName(uid, api, usersData) {
+        uid = String(uid);
+        // 1. جرب api.getUserInfo بشكل مفرد
+        try {
+                const info = await api.getUserInfo(uid);
+                const n = clean(info?.[uid]?.name);
+                if (n) return n;
+        } catch (e) {}
+        // 2. جرب قاعدة البيانات المحلية
+        try {
+                const n = clean(await usersData.getName(uid));
+                if (n && n !== uid) return n;
+        } catch (e) {}
+        // 3. جرب جلب من فيسبوك مباشرة (checkData=false)
+        try {
+                const n = clean(await usersData.getName(uid, false));
+                if (n && n !== uid) return n;
+        } catch (e) {}
+        return UNKNOWN;
 }
 
 module.exports = {
@@ -36,22 +65,13 @@ module.exports = {
 
                 // أمر "ترتيب" أو بدون وسائط أو list → عرض المشرفين بنمط لاست
                 if (commandName === "ترتيب" || !sub || sub === "list" || sub === "-l" || sub === "قائمة") {
-                        const ids = config.adminBot || [];
+                        const ids = (config.adminBot || []).map(String);
                         let body;
                         if (ids.length === 0) {
                                 body = "   ◆ لا يوجد مشرفون";
                         } else {
-                                let apiInfo = {};
-                                try { apiInfo = await api.getUserInfo(ids) || {}; } catch (e) {}
-                                const names = await Promise.all(ids.map(async uid => {
-                                        let name = apiInfo[uid]?.name;
-                                        if (!name) {
-                                                try { name = await usersData.getName(uid); } catch {}
-                                        }
-                                        if (!name || name === uid) name = "حساب غير معروف";
-                                        return { uid, name };
-                                }));
-                                body = names.map((n, i) => ` 「${i + 1}」↞〔${n.name}〕\n         ◈ ${n.uid}`).join("\n");
+                                const names = await Promise.all(ids.map(uid => resolveName(uid, api, usersData)));
+                                body = names.map((name, i) => ` 「${i + 1}」↞〔${name}〕\n         ◈ ${ids[i]}`).join("\n");
                         }
                         return message.reply(box(`قائمة المشرفين [${ids.length}]`, body));
                 }
