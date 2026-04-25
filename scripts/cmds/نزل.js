@@ -2,16 +2,16 @@ module.exports = {
   config: {
     name: "نزله",
     aliases: ["نزلني", "نزلهم"],
-    version: "2.0",
+    version: "2.1",
     author: "Saim",
     countDown: 2,
     role: 0,
-    description: { ar: "تنزيل من إدارة القروب: نزله (رد) | نزلني | نزلهم (الكل ما عداك)" },
+    description: { ar: "تنزيل صامت من إدارة القروب: نزله (رد) | نزلني | نزلهم" },
     category: "box chat",
     guide: { ar: "{p}نزله (رد على رسالة الشخص)\n{p}نزلني\n{p}نزلهم" }
   },
 
-  onStart: async function ({ api, message, event, usersData }) {
+  onStart: async function ({ api, event }) {
     const { senderID, messageReply, threadID, body } = event;
     const prefix = global.BlackBot?.config?.prefix || ".";
 
@@ -21,64 +21,33 @@ module.exports = {
     let threadInfo;
     try {
       threadInfo = await api.getThreadInfo(threadID);
-    } catch (e) {
-      return message.reply("⚠️ ما قدرت أجيب معلومات القروب.");
-    }
+    } catch (_) { return; }
 
     const botID = api.getCurrentUserID();
     const adminIDs = (threadInfo.adminIDs || []).map(a => (typeof a === "object" ? a.id : a));
 
-    if (!adminIDs.includes(botID)) {
-      return message.reply("⚠️ البوت مش أدمن في القروب، ما يقدر يغيّر الإدارة.");
-    }
-    if (!adminIDs.includes(senderID)) {
-      return message.reply("⚠️ راك مش أدمن في القروب.");
-    }
+    if (!adminIDs.includes(botID)) return;
+    if (!adminIDs.includes(senderID)) return;
 
     if (firstWord === "نزله") {
-      if (!messageReply) {
-        return message.reply("⚠️ رد على رسالة الشخص اللي تبي تنزّله.");
-      }
+      if (!messageReply) return;
       const targetID = messageReply.senderID;
-      if (targetID === senderID) {
-        return message.reply("⚠️ استعمل (نزلني) لتنزّل نفسك.");
-      }
-      if (!adminIDs.includes(targetID)) {
-        return message.reply("⚠️ هذا الشخص مش أدمن أصلاً.");
-      }
-      try {
-        await api.changeAdminStatus(threadID, targetID, false);
-        const name = await usersData.getName(targetID).catch(() => targetID);
-        return message.reply(`✅ تم تنزيل ${name} من إدارة القروب.`);
-      } catch (e) {
-        return message.reply("⚠️ فشل التنزيل: " + (e.message || "خطأ"));
-      }
+      if (targetID === senderID || !adminIDs.includes(targetID)) return;
+      try { await api.changeAdminStatus(threadID, targetID, false); } catch (_) {}
+      return;
     }
 
     if (firstWord === "نزلني") {
-      try {
-        await api.changeAdminStatus(threadID, senderID, false);
-        return message.reply("✅ تم تنزيلك من إدارة القروب.");
-      } catch (e) {
-        return message.reply("⚠️ فشل التنزيل: " + (e.message || "خطأ"));
-      }
+      try { await api.changeAdminStatus(threadID, senderID, false); } catch (_) {}
+      return;
     }
 
     if (firstWord === "نزلهم") {
       const targets = adminIDs.filter(id => id !== senderID && id !== botID);
-      if (targets.length === 0) {
-        return message.reply("⚠️ ما كان حد ثاني في الإدارة.");
-      }
-      let success = 0;
       for (const id of targets) {
-        try {
-          await api.changeAdminStatus(threadID, id, false);
-          success++;
-        } catch (_) {}
+        try { await api.changeAdminStatus(threadID, id, false); } catch (_) {}
       }
-      return message.reply(`✅ تم تنزيل ${success} أدمن من القروب. راك الوحيد الباقي.`);
+      return;
     }
-
-    return message.reply("⚠️ استعمال غير صحيح. جرب: نزله / نزلني / نزلهم");
   }
 };

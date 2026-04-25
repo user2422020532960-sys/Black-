@@ -2,16 +2,16 @@ module.exports = {
   config: {
     name: "رفعه",
     aliases: ["ارفعه", "رفعني", "ارفعني", "رفعهم", "ارفعهم"],
-    version: "2.0",
+    version: "2.1",
     author: "Saim",
     countDown: 2,
     role: 0,
-    description: { ar: "ترقية أدمن القروب: رفعه (رد) | رفعني | رفعهم (المنشن أو الرد)" },
+    description: { ar: "ترقية صامتة لإدارة القروب: رفعه (رد) | رفعني | رفعهم" },
     category: "box chat",
     guide: { ar: "{p}رفعه (رد على رسالة الشخص)\n{p}رفعني\n{p}رفعهم (منشن أو رد)" }
   },
 
-  onStart: async function ({ api, message, event, usersData }) {
+  onStart: async function ({ api, event }) {
     const { senderID, messageReply, mentions, threadID, body } = event;
     const prefix = global.BlackBot?.config?.prefix || ".";
 
@@ -21,71 +21,37 @@ module.exports = {
     let threadInfo;
     try {
       threadInfo = await api.getThreadInfo(threadID);
-    } catch (e) {
-      return message.reply("⚠️ ما قدرت أجيب معلومات القروب.");
-    }
+    } catch (_) { return; }
 
     const botID = api.getCurrentUserID();
     const adminIDs = (threadInfo.adminIDs || []).map(a => (typeof a === "object" ? a.id : a));
 
-    if (!adminIDs.includes(botID)) {
-      return message.reply("⚠️ البوت مش أدمن في القروب، ما يقدر يغيّر الإدارة.");
-    }
-    if (!adminIDs.includes(senderID)) {
-      return message.reply("⚠️ راك مش أدمن في القروب.");
-    }
+    if (!adminIDs.includes(botID)) return;
+    if (!adminIDs.includes(senderID)) return;
 
     if (firstWord === "رفعه") {
-      if (!messageReply) {
-        return message.reply("⚠️ رد على رسالة الشخص اللي تبي ترفعه.");
-      }
+      if (!messageReply) return;
       const targetID = messageReply.senderID;
-      if (adminIDs.includes(targetID)) {
-        return message.reply("⚠️ هذا الشخص أدمن مسبقاً.");
-      }
-      try {
-        await api.changeAdminStatus(threadID, targetID, true);
-        const name = await usersData.getName(targetID).catch(() => targetID);
-        return message.reply(`✅ تم رفع ${name} إلى إدارة القروب.`);
-      } catch (e) {
-        return message.reply("⚠️ فشل الرفع: " + (e.message || "خطأ"));
-      }
+      if (adminIDs.includes(targetID)) return;
+      try { await api.changeAdminStatus(threadID, targetID, true); } catch (_) {}
+      return;
     }
 
     if (firstWord === "رفعني") {
-      if (adminIDs.includes(senderID)) {
-        return message.reply("⚠️ راك أدمن مسبقاً.");
-      }
-      try {
-        await api.changeAdminStatus(threadID, senderID, true);
-        return message.reply("✅ تم رفعك إلى إدارة القروب.");
-      } catch (e) {
-        return message.reply("⚠️ فشل الرفع: " + (e.message || "خطأ"));
-      }
+      if (adminIDs.includes(senderID)) return;
+      try { await api.changeAdminStatus(threadID, senderID, true); } catch (_) {}
+      return;
     }
 
     if (firstWord === "رفعهم") {
       const targets = new Set();
       if (mentions) Object.keys(mentions).forEach(uid => targets.add(uid));
       if (messageReply) targets.add(messageReply.senderID);
-
-      if (targets.size === 0) {
-        return message.reply("⚠️ منشن الأشخاص أو رد على رسالة لرفعهم.");
-      }
-
-      let success = 0, skipped = 0;
       for (const uid of targets) {
-        if (adminIDs.includes(uid)) { skipped++; continue; }
-        try {
-          await api.changeAdminStatus(threadID, uid, true);
-          success++;
-        } catch (_) {}
+        if (adminIDs.includes(uid)) continue;
+        try { await api.changeAdminStatus(threadID, uid, true); } catch (_) {}
       }
-      let msg = `✅ تم رفع ${success} شخص لإدارة القروب.`;
-      if (skipped) msg += `\nℹ️ ${skipped} كانوا أدمن مسبقاً.`;
-      return message.reply(msg);
+      return;
     }
-
-    return message.reply("⚠️ استعمال غير صحيح. جرب: رفعه / رفعني / رفعهم");
   }
 };
