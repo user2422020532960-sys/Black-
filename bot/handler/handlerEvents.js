@@ -91,14 +91,12 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
                 return true;
         }
 
-        // check if only admin bot
+        // check if only admin bot (silent block: no notification message)
         if (
                 config.adminOnly.enable == true
                 && !adminBot.includes(senderID)
                 && !config.adminOnly.ignoreCommand.includes(commandName)
         ) {
-                if (hideNotiMessage.adminOnly == false)
-                        message.reply(getText("onlyAdminBot", null, null, null, lang));
                 return true;
         }
 
@@ -276,55 +274,77 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                 */
                 let isUserCallCommand = false;
                 async function onStart() {
-                        // —————————————— PRIVATE DM: ADMINS ONLY —————————————— //
-                        const isAdminBot = (global.BlackBot.config.adminBot || []).includes(senderID);
-                        if (!isGroup && isAdminBot && body && body.trim() && !body.startsWith(prefix)) {
-                                const aiName = "بلاك";
-                                const aiCommand = BlackBot.commands.get(aiName) || BlackBot.commands.get(BlackBot.aliases.get(aiName));
-                                if (aiCommand) {
-                                        if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, aiName, message, langCode))
-                                                return;
-                                        const aiInput = body.trim();
-                                        const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, aiCommand);
-                                        createMessageSyntaxError(aiName);
-                                        try {
-                                                await aiCommand.onStart({
-                                                        ...parameters,
-                                                        args: aiInput.split(/ +/),
-                                                        commandName: aiName,
-                                                        getLang: getText2,
-                                                        removeCommandNameFromBody: () => aiInput
-                                                });
-                                        } catch (err) {
-                                                log.err("DM AI ROUTE", "Error routing DM to AI", err);
-                                        }
-                                }
-                                return;
-                        }
-                        // —————————————— CHECK بلاك WITHOUT PREFIX —————————————— //
-                        const aiTrigger = "بلاك";
-                        if (body && body.startsWith(aiTrigger) && !body.startsWith(prefix)) {
-                                const aiInput = body.slice(aiTrigger.length).trim();
-                                if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, aiTrigger, message, langCode))
-                                        return;
-                                const aiCommand = BlackBot.commands.get(aiTrigger) || BlackBot.commands.get(BlackBot.aliases.get(aiTrigger));
-                                if (aiCommand) {
-                                        const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, aiCommand);
-                                        createMessageSyntaxError(aiTrigger);
-                                        try {
-                                                await aiCommand.onStart({
-                                                        ...parameters,
-                                                        args: aiInput ? aiInput.split(/ +/) : [],
-                                                        commandName: aiTrigger,
-                                                        getLang: getText2,
-                                                        removeCommandNameFromBody: () => aiInput
-                                                });
-                                        } catch (err) {
-                                                log.err("AI ROUTE", "Error routing to AI", err);
-                                        }
-                                }
-                                return;
-                        }
+                        // —————————————— HELPER: detect real bot command in plain text —————————————— //
+                          // Returns true when the first whitespace-separated word of `text` is a known
+                          // command name or alias, so we don't hijack it as an AI prompt.
+                          function startsWithKnownCommand(text) {
+                                  if (!text) return false;
+                                  const first = text.trim().split(/\s+/)[0];
+                                  if (!first) return false;
+                                  const lower = first.toLowerCase();
+                                  if (BlackBot.commands.has(first) || BlackBot.commands.has(lower)) return true;
+                                  if (BlackBot.aliases.has(first) || BlackBot.aliases.has(lower)) return true;
+                                  const aliasesData = (threadData && threadData.data && threadData.data.aliases) || {};
+                                  for (const cmdName in aliasesData) {
+                                          const arr = aliasesData[cmdName] || [];
+                                          if (arr.includes(first) || arr.includes(lower)) return true;
+                                  }
+                                  return false;
+                          }
+
+                          // —————————————— PRIVATE DM: ADMINS ONLY —————————————— //
+                          const isAdminBot = (global.BlackBot.config.adminBot || []).includes(senderID);
+                          if (!isGroup && isAdminBot && body && body.trim() && !body.startsWith(prefix)) {
+                                  // Don't hijack DM input that looks like a real command call
+                                  if (startsWithKnownCommand(body)) return;
+                                  const aiName = "بلاك";
+                                  const aiCommand = BlackBot.commands.get(aiName) || BlackBot.commands.get(BlackBot.aliases.get(aiName));
+                                  if (aiCommand) {
+                                          if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, aiName, message, langCode))
+                                                  return;
+                                          const aiInput = body.trim();
+                                          const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, aiCommand);
+                                          createMessageSyntaxError(aiName);
+                                          try {
+                                                  await aiCommand.onStart({
+                                                          ...parameters,
+                                                          args: aiInput.split(/ +/),
+                                                          commandName: aiName,
+                                                          getLang: getText2,
+                                                          removeCommandNameFromBody: () => aiInput
+                                                  });
+                                          } catch (err) {
+                                                  log.err("DM AI ROUTE", "Error routing DM to AI", err);
+                                          }
+                                  }
+                                  return;
+                          }
+                          // —————————————— CHECK بلاك WITHOUT PREFIX —————————————— //
+                          const aiTrigger = "بلاك";
+                          if (body && body.startsWith(aiTrigger) && !body.startsWith(prefix)) {
+                                  const aiInput = body.slice(aiTrigger.length).trim();
+                                  // If the rest is itself a real command/alias call, don't route to AI.
+                                  if (aiInput && startsWithKnownCommand(aiInput)) return;
+                                  if (isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, aiTrigger, message, langCode))
+                                          return;
+                                  const aiCommand = BlackBot.commands.get(aiTrigger) || BlackBot.commands.get(BlackBot.aliases.get(aiTrigger));
+                                  if (aiCommand) {
+                                          const getText2 = createGetText2(langCode, `${process.cwd()}/languages/cmds/${langCode}.js`, prefix, aiCommand);
+                                          createMessageSyntaxError(aiTrigger);
+                                          try {
+                                                  await aiCommand.onStart({
+                                                          ...parameters,
+                                                          args: aiInput ? aiInput.split(/ +/) : [],
+                                                          commandName: aiTrigger,
+                                                          getLang: getText2,
+                                                          removeCommandNameFromBody: () => aiInput
+                                                  });
+                                          } catch (err) {
+                                                  log.err("AI ROUTE", "Error routing to AI", err);
+                                          }
+                                  }
+                                  return;
+                          }
                         // —————————————— CHECK USE BOT —————————————— //
                         if (!body || !body.startsWith(prefix))
                                 return;
