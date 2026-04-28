@@ -13,40 +13,37 @@ module.exports = {
         role: 2,
         shortDescription: "إرسال رسالة متكررة بنص مخصص",
         category: "owner",
-        guide: "{pn} <الوقت>[s] — تفعيل مع نص تكتبه\n{pn} off — إيقاف"
+        guide: "{pn} <الوقت>[s] | {pn} off"
     },
 
-    onStart: async function ({ args, event, api, message }) {
+    onStart: async function ({ args, event, api }) {
         const { threadID, senderID } = event;
         const callerThreadID = event.callerThreadID || threadID;
 
         if (args[0] === "off") {
             if (!xIntervals[threadID]) {
-                return api.sendMessage("⚠️ | لا يوجد وضع مفعّل في هذا الغروب", callerThreadID);
+                return api.sendMessage("〔✗〕 لا يوجد وضع مفعّل.", callerThreadID);
             }
             clearInterval(xIntervals[threadID]);
             delete xIntervals[threadID];
             config.adminOnly.enable = false;
             writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-            return api.sendMessage("🟢 | تم الإيقاف!\n🔓 الأوامر متاحة للجميع الآن", callerThreadID);
+            return api.sendMessage("〔✓〕 تم الإيقاف | الأوامر متاحة للجميع", callerThreadID);
         }
 
         const timeArg = args[0];
         if (!timeArg) {
-            return api.sendMessage(
-                "◈ الاستخدام:\n  .x <الوقت>[s] — مثال: .x 10s أو .x 2\n  .x off — إيقاف",
-                callerThreadID
-            );
+            return api.sendMessage("〔!〕 مثال: .x 10s أو .x 2", callerThreadID);
         }
 
         let intervalMs;
         if (timeArg.toLowerCase().endsWith("s")) {
             const secs = parseInt(timeArg.slice(0, -1));
-            if (isNaN(secs) || secs <= 0) return api.sendMessage("⚠️ | وقت غير صحيح. مثال: 10s أو 2", callerThreadID);
+            if (isNaN(secs) || secs <= 0) return api.sendMessage("〔✗〕 وقت غير صحيح.", callerThreadID);
             intervalMs = secs * 1000;
         } else {
             const mins = parseInt(timeArg);
-            if (isNaN(mins) || mins <= 0) return api.sendMessage("⚠️ | وقت غير صحيح. مثال: 10s أو 2", callerThreadID);
+            if (isNaN(mins) || mins <= 0) return api.sendMessage("〔✗〕 وقت غير صحيح.", callerThreadID);
             intervalMs = mins * 60 * 1000;
         }
 
@@ -55,7 +52,7 @@ module.exports = {
             : `${intervalMs / 1000} ثانية`;
 
         api.sendMessage(
-            `📝 | أرسل النص الذي سيُرسَل كل ${timeLabel}:`,
+            `〔!〕 أرسل النص | كل ${timeLabel}`,
             callerThreadID,
             (err, info) => {
                 if (err || !info) return;
@@ -81,7 +78,7 @@ module.exports = {
         global.BlackBot.onReply.delete(Reply.messageID);
 
         if (!text) {
-            return api.sendMessage("⚠️ | النص فارغ، استخدم الأمر مجدداً", callerThreadID);
+            return api.sendMessage("〔✗〕 النص فارغ.", callerThreadID);
         }
 
         if (xIntervals[targetThreadID]) {
@@ -97,7 +94,7 @@ module.exports = {
             : `${intervalMs / 1000} ثانية`;
 
         api.sendMessage(
-            `✅ | تم التفعيل!\n⏱ سيتم إرسال الرسالة كل ${timeLabel}\n🔒 الأوامر مقفلة للأعضاء - الأدمن فقط`,
+            `〔✓〕 مفعّل | كل ${timeLabel} | الأوامر مقفلة`,
             callerThreadID
         );
 
@@ -106,14 +103,13 @@ module.exports = {
             if (text.length <= CHUNK_SIZE) {
                 api.sendMessage(text, tid).catch(() => {});
             } else {
-                let i = 0;
-                let chunkIdx = 0;
+                let i = 0, idx = 0;
                 while (i < text.length) {
                     const chunk = text.slice(i, i + CHUNK_SIZE);
-                    await new Promise(r => setTimeout(r, chunkIdx * 500));
+                    await new Promise(r => setTimeout(r, idx * 500));
                     api.sendMessage(chunk, tid).catch(() => {});
                     i += CHUNK_SIZE;
-                    chunkIdx++;
+                    idx++;
                 }
             }
         };
