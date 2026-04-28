@@ -349,6 +349,7 @@ module.exports = {
 
     const fakeEvent = {
       threadID: target.threadID,
+      callerThreadID: event.threadID,
       senderID: event.senderID,
       messageID: "remote_" + Date.now(),
       body: prefix + action,
