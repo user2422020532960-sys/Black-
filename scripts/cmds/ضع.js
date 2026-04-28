@@ -1,5 +1,7 @@
 const _restoreTimers = new Map();
-const _processing = new Map();
+const _retryTimers = new Map();
+const MAX_RETRIES = 5;
+const RETRY_BASE_DELAY = 3000;
 
 async function buildNickname(text, uid, usersData) {
   let name = text;
@@ -11,11 +13,28 @@ async function buildNickname(text, uid, usersData) {
   return name;
 }
 
+async function restoreWithRetry(api, nickname, threadID, uid, attempt = 0) {
+  const retryKey = `${threadID}:${uid}:retry`;
+  try {
+    await api.changeNickname(nickname, threadID, uid);
+    _retryTimers.delete(retryKey);
+  } catch (_) {
+    if (attempt < MAX_RETRIES) {
+      const delay = RETRY_BASE_DELAY * Math.pow(2, attempt);
+      const t = setTimeout(() => {
+        _retryTimers.delete(retryKey);
+        restoreWithRetry(api, nickname, threadID, uid, attempt + 1);
+      }, delay);
+      _retryTimers.set(retryKey, t);
+    }
+  }
+}
+
 module.exports = {
   config: {
     name: "ضع",
     aliases: ["da3"],
-    version: "3.0",
+    version: "3.2",
     author: "Saint",
     countDown: 5,
     role: 0,
@@ -29,18 +48,15 @@ module.exports = {
     const text = args.join(" ").trim();
     if (!text) return;
 
-    const botID = api.getCurrentUserID();
-    const adminBot = global.BlackBot.config.adminBot || [];
+    const botID = String(api.getCurrentUserID());
 
     if (text === "off") {
-      global.da3SilentMode = global.da3SilentMode || {};
-      delete global.da3SilentMode[threadID];
       await threadsData.set(threadID, {}, "data.da3Lock");
       return message.reply("◈ تم إيقاف قفل الكنيات");
     }
 
     const threadInfo = await api.getThreadInfo(threadID);
-    const targets = threadInfo.participantIDs.filter(uid => uid !== botID && !adminBot.includes(uid));
+    const targets = threadInfo.participantIDs.filter(uid => String(uid) !== botID);
 
     if (!targets.length) return message.reply("◈ لا يوجد أعضاء لتغيير كنياتهم");
 
@@ -55,8 +71,8 @@ module.exports = {
       await Promise.all(batch.map(async (uid) => {
         try {
           const name = await buildNickname(text, uid, usersData);
-          await api.changeNickname(name, threadID, uid);
-          nicknames[uid] = name;
+          await api.changeNickname(name, threadID, String(uid));
+          nicknames[String(uid)] = name;
           done++;
         } catch (e) { failed++; }
       }));
@@ -67,32 +83,36 @@ module.exports = {
     message.reply(`◈ تم تغيير ${done}/${targets.length} كنية بنجاح${failed ? ` (${failed} فشل)` : ""}`);
   },
 
-  onEvent: async function ({ api, event, threadsData }) {
+  onEvent: async function ({ api, event, threadsData, usersData }) {
     const { threadID, author, logMessageType, logMessageData } = event;
     if (logMessageType !== "log:user-nickname") return;
 
     const lock = await threadsData.get(threadID, "data.da3Lock");
     if (!lock?.enable) return;
 
-    const botID = api.getCurrentUserID();
-    if (author === botID) return;
+    const botID = String(api.getCurrentUserID());
+    if (String(author) === botID) return;
 
-    const { participant_id } = logMessageData;
-    const restoreNickname = lock.nicknames?.[participant_id] ?? lock.nickname ?? "";
+    const participant_id = String(logMessageData?.participant_id || "");
+    if (!participant_id) return;
+
+    let restoreNickname = lock.nicknames?.[participant_id];
+    if (restoreNickname === undefined) {
+      restoreNickname = await buildNickname(lock.nickname || "", participant_id, usersData);
+    }
 
     const key = `${threadID}:${participant_id}`;
-    if (_processing.get(key)) return;
+    const retryKey = `${key}:retry`;
 
     if (_restoreTimers.has(key)) clearTimeout(_restoreTimers.get(key));
+    if (_retryTimers.has(retryKey)) {
+      clearTimeout(_retryTimers.get(retryKey));
+      _retryTimers.delete(retryKey);
+    }
 
     const timer = setTimeout(async () => {
       _restoreTimers.delete(key);
-      if (_processing.get(key)) return;
-      _processing.set(key, true);
-      try {
-        await api.changeNickname(restoreNickname, threadID, participant_id);
-      } catch (_) {}
-      _processing.delete(key);
+      await restoreWithRetry(api, restoreNickname, threadID, participant_id);
     }, 1000);
 
     _restoreTimers.set(key, timer);
