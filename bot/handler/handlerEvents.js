@@ -91,9 +91,10 @@ function isBannedOrOnlyAdmin(userData, threadData, senderID, threadID, isGroup, 
                 return true;
         }
 
-        // check if only admin bot (silent block: no notification message)
+        // check if only admin bot (silent block: no notification message) — groups only
         if (
-                config.adminOnly.enable == true
+                isGroup == true
+                && config.adminOnly.enable == true
                 && !adminBot.includes(senderID)
                 && !config.adminOnly.ignoreCommand.includes(commandName)
         ) {
