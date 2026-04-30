@@ -121,10 +121,9 @@ module.exports = (
       const isCommand = trimmedBody.startsWith(prefix);
       const isAiTrigger = trimmedBody.startsWith("بلاك");
       const hasOnReply = event.messageReply && global.BlackBot.onReply.has(event.messageReply.messageID);
-      const isAdminDM = !event.isGroup && (global.BlackBot.config.adminBot || []).includes(event.senderID);
       const hasOnChatHandlers = Array.isArray(global.BlackBot.onChat) && global.BlackBot.onChat.length > 0;
 
-      if (!isCommand && !isAiTrigger && !hasOnReply && !isAdminDM) {
+      if (!isCommand && !isAiTrigger && !hasOnReply) {
         if (!hasOnChatHandlers) return;
         _onChatOnly = true;
       }
